@@ -71,19 +71,21 @@ func init() {
 }
 
 func startStudy(user *model.User) {
-	// 随机休眠再开始学习
-	time.Sleep(time.Duration(rand.Intn(1000)) * time.Second)
-
+	randomDuration := time.Duration(rand.Intn(1000))
 	_, err := zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
 		return zorm.UpdateNotZeroValue(ctx, &model.User{
 			Id:            user.Id,
-			LastStudyTime: domain.DateTime(time.Now()),
+			LastStudyTime: domain.DateTime(time.Now().Add(randomDuration * time.Second)),
 		})
 	})
 	if err != nil {
 		logger.Errorln(err)
 		return
 	}
+
+	// 随机休眠再开始学习
+	time.Sleep(randomDuration * time.Second)
+
 	logger.Infoln(user.Nick, "开始学习")
 	study.Core.Learn(user, constant.Article)
 	study.Core.Learn(user, constant.Video)

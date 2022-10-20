@@ -6,6 +6,7 @@ import (
 
 	"gitee.com/chunanyong/zorm"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yockii/qscore/pkg/domain"
 	"github.com/yockii/qscore/pkg/task"
 
 	"xxqg-automate/internal/model"
@@ -13,7 +14,7 @@ import (
 )
 
 func init() {
-	task.AddFunc("@every 1h", keepAlive)
+	task.AddFunc("@every 1m", keepAlive)
 }
 
 func keepAlive() {
@@ -29,5 +30,11 @@ func keepAlive() {
 	}
 	for _, user := range users {
 		study.GetUserScore(study.TokenToCookies(user.Token))
+		zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
+			return zorm.UpdateNotZeroValue(ctx, &model.User{
+				Id:            user.Id,
+				LastCheckTime: domain.DateTime(time.Now()),
+			})
+		})
 	}
 }

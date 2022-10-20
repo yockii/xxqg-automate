@@ -22,10 +22,8 @@ func init() {
 }
 
 func fetchServerInfo() {
-	defer func() {
-		time.Sleep(5 * time.Second)
-		ants.Submit(fetchServerInfo)
-	}()
+	time.Sleep(5 * time.Second)
+	defer ants.Submit(fetchServerInfo)
 	result := new(wan.StatusAsk)
 	_, err := util.GetClient().R().
 		SetHeader("token", constant.CommunicateHeaderKey).

@@ -32,7 +32,7 @@ var (
 func init() {
 	config.DefaultInstance.SetDefault("server.port", 8080)
 
-	background()
+	//background()
 
 	flag.BoolVar(&u, "update", false, "更新应用")
 	flag.Parse()
