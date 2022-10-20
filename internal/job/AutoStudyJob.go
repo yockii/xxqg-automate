@@ -2,6 +2,7 @@ package job
 
 import (
 	"context"
+	"math/rand"
 	"time"
 
 	"gitee.com/chunanyong/zorm"
@@ -70,6 +71,9 @@ func init() {
 }
 
 func startStudy(user *model.User) {
+	// 随机休眠再开始学习
+	time.Sleep(time.Duration(rand.Intn(1000)) * time.Second)
+
 	_, err := zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
 		return zorm.UpdateNotZeroValue(ctx, &model.User{
 			Id:            user.Id,
