@@ -83,7 +83,7 @@ func (c *core) Answer(user *model.User, t int) {
 		// 每日答题
 		{
 			if score.Content["daily"].CurrentScore >= score.Content["daily"].MaxScore {
-				logger.Infoln("检测到每日答题已完成，退出每日答题")
+				logger.Debugln("检测到每日答题已完成，退出每日答题")
 				return
 			}
 			err = page.Click(ButtonDaily)
@@ -96,7 +96,7 @@ func (c *core) Answer(user *model.User, t int) {
 		// 每周答题
 		{
 			if score.Content["weekly"].CurrentScore >= score.Content["weekly"].MaxScore {
-				logger.Infoln("检测到每周答题已完成，退出每周答题")
+				logger.Debugln("检测到每周答题已完成，退出每周答题")
 				return
 			}
 			var id int
@@ -123,7 +123,7 @@ func (c *core) Answer(user *model.User, t int) {
 		// 专项
 		{
 			if score.Content["special"].CurrentScore >= score.Content["special"].MaxScore {
-				logger.Infoln("检测到专项答题已经完成，退出答题")
+				logger.Debugln("检测到专项答题已经完成，退出答题")
 				return
 			}
 			var id int
@@ -162,7 +162,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 		// 查看是否存在答题按钮，若按钮可用则重新提交答题
 		btn, err := page.QuerySelector(`#app > div > div.layout-body > div > div.detail-body > div.action-row > button`)
 		if err != nil {
-			logger.Infoln("获取提交按钮失败，本次答题结束" + err.Error())
+			logger.Debugln("获取提交按钮失败，本次答题结束" + err.Error())
 			return
 		}
 		if btn != nil {
@@ -181,7 +181,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 		// 该元素存在则说明出现了滑块
 		handle, _ := page.QuerySelector("#nc_mask > div")
 		if handle != nil {
-			logger.Infoln(handle)
+			logger.Debugln(handle)
 			var en bool
 			en, err = handle.IsVisible()
 			if err != nil {
@@ -195,7 +195,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 				page.Mouse().Move(772, 416, playwright.MouseMoveOptions{})
 				page.Mouse().Up()
 				time.Sleep(10 * time.Second)
-				logger.Infoln("可能存在滑块")
+				logger.Debugln("可能存在滑块")
 				en, err = handle.IsVisible()
 				if err != nil {
 					return
@@ -212,7 +212,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 			{
 				// 检测是否已经完成
 				if score.Content["daily"].CurrentScore >= score.Content["daily"].MaxScore {
-					logger.Infoln("检测到每日答题已经完成，退出答题")
+					logger.Debugln("检测到每日答题已经完成，退出答题")
 					return
 				}
 			}
@@ -220,7 +220,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 			{
 				// 检测是否已经完成
 				if score.Content["weekly"].CurrentScore >= score.Content["weekly"].MaxScore {
-					logger.Infoln("检测到每周答题已经完成，退出答题")
+					logger.Debugln("检测到每周答题已经完成，退出答题")
 					return
 				}
 			}
@@ -228,7 +228,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 			{
 				// 检测是否已经完成
 				if score.Content["special"].CurrentScore >= score.Content["special"].MaxScore {
-					logger.Infoln("检测到专项答题已经完成，退出答题")
+					logger.Debugln("检测到专项答题已经完成，退出答题")
 					return
 				}
 			}
@@ -261,7 +261,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 
 				return
 			}
-			logger.Infoln("## 题目类型：" + categoryText)
+			logger.Debugln("## 题目类型：" + categoryText)
 
 			// 获取题目的问题
 			questionText := ""
@@ -271,7 +271,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 				return
 			}
 
-			logger.Infoln("## 题目：" + questionText)
+			logger.Debugln("## 题目：" + questionText)
 			if title == questionText {
 				logger.Warningln("可能已经卡住，正在重试，重试次数+1")
 				continue
@@ -314,7 +314,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 			logger.Debugln("已关闭提示信息")
 			// 从整个页面内容获取提示信息
 			tips := getTips(content)
-			logger.Infoln("[提示信息]：", tips)
+			logger.Debugln("[提示信息]：", tips)
 
 			if i > 4 {
 				logger.Warningln("重试次数太多，即将退出答题")
@@ -332,15 +332,15 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 					return
 				}
 			case strings.Contains(categoryText, "多选题"):
-				logger.Infoln("读取到多选题")
+				logger.Debugln("读取到多选题")
 				var options []string
 				options, err = getOptions(page)
 				if err != nil {
 					logger.Errorln("获取选项失败", err)
 					return
 				}
-				logger.Infoln("获取到选项答案：", options)
-				logger.Infoln("[多选题选项]：", options)
+				logger.Debugln("获取到选项答案：", options)
+				logger.Debugln("[多选题选项]：", options)
 				var answer []string
 
 				for _, option := range options {
@@ -355,23 +355,23 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 
 				if len(answer) < 1 {
 					answer = append(answer, options...)
-					logger.Infoln("无法判断答案，自动选择ABCD")
+					logger.Debugln("无法判断答案，自动选择ABCD")
 				}
-				logger.Infoln("根据提示分别选择了", answer)
+				logger.Debugln("根据提示分别选择了", answer)
 				// 多选题选择
 				err = radioCheck(page, answer)
 				if err != nil {
 					return
 				}
 			case strings.Contains(categoryText, "单选题"):
-				logger.Infoln("读取到单选题")
+				logger.Debugln("读取到单选题")
 				var options []string
 				options, err = getOptions(page)
 				if err != nil {
 					logger.Errorln("获取选项失败", err)
 					return
 				}
-				logger.Infoln("获取到选项答案：", options)
+				logger.Debugln("获取到选项答案：", options)
 
 				var answer []string
 
@@ -390,10 +390,10 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 				}
 				if len(answer) < 1 {
 					answer = append(answer, options[0])
-					logger.Infoln("无法判断答案，自动选择A")
+					logger.Debugln("无法判断答案，自动选择A")
 				}
 
-				logger.Infoln("根据提示分别选择了", answer)
+				logger.Debugln("根据提示分别选择了", answer)
 				err = radioCheck(page, answer)
 				if err != nil {
 					return
@@ -500,7 +500,7 @@ func FillBlank(page playwright.Page, tips []string) error {
 			return err
 		}
 		data1Text, _ := data1.TextContent()
-		logger.Infoln("题目前半段：=》" + data1Text)
+		logger.Debugln("题目前半段：=》" + data1Text)
 		searchAnswer := service.QuestionBankService.SearchAnswer(data1Text)
 		if searchAnswer != "" {
 			answer = append(answer, searchAnswer)
@@ -515,14 +515,14 @@ func FillBlank(page playwright.Page, tips []string) error {
 		logger.Errorln("获取输入框错误" + err.Error())
 		return err
 	}
-	logger.Infoln("获取到", len(inouts), "个填空")
+	logger.Debugln("获取到", len(inouts), "个填空")
 	if len(inouts) == 1 && len(tips) > 1 {
 		temp := ""
 		for _, tip := range tips {
 			temp += tip
 		}
 		answer = strings.Split(temp, ",")
-		logger.Infoln("答案已合并处理")
+		logger.Debugln("答案已合并处理")
 	}
 	var ans string
 	for i := 0; i < len(inouts); i++ {
@@ -563,7 +563,7 @@ func checkNextBotton(page playwright.Page) {
 		time.Sleep(2 * time.Second)
 		_, err = btns[0].GetAttribute("disabled")
 		if err != nil {
-			logger.Infoln("未检测到禁言属性")
+			logger.Debugln("未检测到禁言属性")
 
 			return
 		}
@@ -574,7 +574,7 @@ func checkNextBotton(page playwright.Page) {
 
 			return
 		}
-		logger.Infoln("已成功提交试卷")
+		logger.Debugln("已成功提交试卷")
 	}
 }
 
@@ -639,20 +639,20 @@ func getSpecialId(cookies []*http.Cookie) (int, error) {
 		logger.Errorln("获取专项答题列表转换json错误" + err.Error())
 		return 0, err
 	}
-	logger.Infoln(fmt.Sprintf("共获取到专项答题%d个", list.TotalCount))
+	logger.Debugln(fmt.Sprintf("共获取到专项答题%d个", list.TotalCount))
 
 	// 判断是否配置选题顺序，若ReverseOrder为true则从后面选题
 	//if conf.GetConfig().ReverseOrder {
 	//	for i := len(list.List) - 1; i >= 0; i-- {
 	//		if list.List[i].TipScore == 0 {
-	//			logger.Infoln(fmt.Sprintf("获取到未答专项答题: %v，id: %v", list.List[i].Name, list.List[i].Id))
+	//			logger.Debugln(fmt.Sprintf("获取到未答专项答题: %v，id: %v", list.List[i].Name, list.List[i].Id))
 	//			return list.List[i].Id, nil
 	//		}
 	//	}
 	//} else {
 	for _, s := range list.List {
 		if s.TipScore == 0 {
-			logger.Infoln(fmt.Sprintf("获取到未答专项答题: %v，id: %v", s.Name, s.Id))
+			logger.Debugln(fmt.Sprintf("获取到未答专项答题: %v，id: %v", s.Name, s.Id))
 			return s.Id, nil
 		}
 	}
@@ -713,13 +713,13 @@ func getWeekId(cookies []*http.Cookie) (int, error) {
 		logger.Errorln("获取每周答题列表转换json错误" + err.Error())
 		return 0, err
 	}
-	logger.Infoln(fmt.Sprintf("共获取到每周答题%d个", list.TotalCount))
+	logger.Debugln(fmt.Sprintf("共获取到每周答题%d个", list.TotalCount))
 
 	//if conf.GetConfig().ReverseOrder {
 	//	for i := len(list.List) - 1; i >= 0; i-- {
 	//		for _, practice := range list.List[i].Practices {
 	//			if practice.TipScore == 0 {
-	//				logger.Infoln(fmt.Sprintf("获取到未答每周答题: %v，id: %v", practice.Name, practice.Id))
+	//				logger.Debugln(fmt.Sprintf("获取到未答每周答题: %v，id: %v", practice.Name, practice.Id))
 	//				return practice.Id, nil
 	//			}
 	//		}
@@ -728,7 +728,7 @@ func getWeekId(cookies []*http.Cookie) (int, error) {
 	for _, s := range list.List {
 		for _, practice := range s.Practices {
 			if practice.TipScore == 0 {
-				logger.Infoln(fmt.Sprintf("获取到未答每周答题: %v，id: %v", practice.Name, practice.Id))
+				logger.Debugln(fmt.Sprintf("获取到未答每周答题: %v，id: %v", practice.Name, practice.Id))
 				return practice.Id, nil
 			}
 		}

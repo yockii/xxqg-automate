@@ -22,7 +22,7 @@ func (c *core) startLearnVideo(user *model.User, p *playwright.Page, score *Scor
 		}
 
 		if score.Content[constant.Video].CurrentScore >= score.Content[constant.Video].MaxScore && score.Content["video_time"].CurrentScore >= score.Content["video_time"].MaxScore {
-			logger.Infoln("检测到视频学习已经完成")
+			logger.Debugln("检测到视频学习已经完成")
 			return
 		} else {
 			n := rand.Intn(len(links))
@@ -35,7 +35,7 @@ func (c *core) startLearnVideo(user *model.User, p *playwright.Page, score *Scor
 				logger.Errorln("页面跳转失败")
 				continue
 			}
-			logger.Infoln("正在观看视频: ", links[n].Title)
+			logger.Debugln("正在观看视频: ", links[n].Title)
 			learnTime := 60 + rand.Intn(15) + 3
 			for j := 0; j < learnTime; j++ {
 				if !c.browser.IsConnected() {
@@ -54,7 +54,7 @@ func (c *core) startLearnVideo(user *model.User, p *playwright.Page, score *Scor
 			score, _ = GetUserScore(TokenToCookies(user.Token))
 
 			if score.Content[constant.Video].CurrentScore >= score.Content[constant.Video].MaxScore && score.Content["video_time"].CurrentScore >= score.Content["video_time"].MaxScore {
-				logger.Infoln("检测到本次视频学习分数已满，退出学习")
+				logger.Debugln("检测到本次视频学习分数已满，退出学习")
 				break
 			}
 		}

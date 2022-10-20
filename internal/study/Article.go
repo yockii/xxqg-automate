@@ -23,17 +23,17 @@ func (c *core) Learn(user *model.User, learnModule string) {
 		return
 	}
 	if score == nil {
-		logger.Infof("未获取到分数，结束%s学习\n", learnModule)
+		logger.Debugf("未获取到分数，结束%s学习\n", learnModule)
 		return
 	}
 	if learnModule == constant.Article {
 		if articleScore, ok := score.Content[constant.Article]; !ok || articleScore.CurrentScore >= articleScore.MaxScore {
-			logger.Infoln("检测到文章学习已完成，结束学习")
+			logger.Debugln("检测到文章学习已完成，结束学习")
 			return
 		}
 	} else if learnModule == constant.Video {
 		if videoScore, ok := score.Content[constant.Video]; !ok || (videoScore.CurrentScore >= videoScore.MaxScore && score.Content["video_time"].CurrentScore >= score.Content["video_time"].MaxScore) {
-			logger.Infoln("检测到视频学习已完成，结束学习")
+			logger.Debugln("检测到视频学习已完成，结束学习")
 			return
 		}
 	}
@@ -97,7 +97,7 @@ func (c *core) startLearnArticle(user *model.User, p *playwright.Page, score *Sc
 			logger.Errorln("页面跳转失败")
 			continue
 		}
-		logger.Infoln("正在学习文章: ", links[n].Title)
+		logger.Debugln("正在学习文章: ", links[n].Title)
 		learnTime := 60 + rand.Intn(15) + 3
 		for j := 0; j < learnTime; j++ {
 			if !c.browser.IsConnected() {
@@ -115,7 +115,7 @@ func (c *core) startLearnArticle(user *model.User, p *playwright.Page, score *Sc
 		}
 		score, _ = GetUserScore(TokenToCookies(user.Token))
 		if articleScore, ok := score.Content[constant.Article]; !ok || articleScore.CurrentScore >= articleScore.MaxScore {
-			logger.Infoln("检测到文章学习已完成，结束文章学习")
+			logger.Debugln("检测到文章学习已完成，结束文章学习")
 			return
 		}
 	}

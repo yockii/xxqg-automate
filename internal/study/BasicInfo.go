@@ -32,12 +32,12 @@ func GetToken(code, sign string) (*model.User, error) {
 		"state": sign + uuid.New().String(),
 	}).Get("https://pc-api.xuexi.cn/login/secure_check")
 	if err != nil {
-		logger.Error(err)
+		logger.Errorln(err)
 		return nil, err
 	}
 	user, err := GetUserInfo(resp.Cookies())
 	if err != nil {
-		logger.Error(err)
+		logger.Errorln(err)
 		return nil, err
 	}
 	var token string

@@ -96,6 +96,8 @@ func handleDingtalkCall() {
 
 func handleStatusAsk() {
 	server.Get("/api/v1/status", checkToken, func(ctx *fiber.Ctx) error {
+		locker.Lock()
+		defer locker.Unlock()
 		return ctx.JSON(wan.StatusAsk{
 			NeedLink:       len(loginReq) > 0,
 			NeedStatistics: needStatistics.Load(),

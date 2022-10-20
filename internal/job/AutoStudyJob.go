@@ -27,9 +27,22 @@ func init() {
 			&users,
 			nil,
 		); err != nil {
-			logger.Error(err)
+			logger.Errorln(err)
 			return
 		}
+
+		// 查出间隔1小时以上未完成学习的，重新学习
+		lastTime = time.Now().Add(-1 * time.Hour)
+		var notFinished []*model.User
+		if err := zorm.Query(context.Background(),
+			zorm.NewSelectFinder(model.UserTableName).Append("WHERE last_study_time>? and last_study_time<? and (last_finish_time is null or last_finish_time<last_study_time)", time.Now().Format("2006-01-02"), lastTime),
+			&notFinished,
+			nil,
+		); err != nil {
+			logger.Errorln(err)
+		}
+		users = append(users, notFinished...)
+
 		// 开始学习
 		for _, user := range users {
 			if user.Token != "" {

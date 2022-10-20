@@ -4,10 +4,13 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
+	"time"
 
+	"github.com/imroc/req/v3"
 	logger "github.com/sirupsen/logrus"
+
+	"xxqg-automate/internal/constant"
 )
 
 var (
@@ -16,10 +19,10 @@ var (
 
 func CheckQuestionDB() bool {
 
-	if !FileIsExist("./conf/QuestionBank.db") {
+	if !FileIsExist(constant.QuestionBankDBFile) {
 		return false
 	}
-	f, err := os.Open("./conf/QuestionBank.db")
+	f, err := os.Open(constant.QuestionBankDBFile)
 	if err != nil {
 		logger.Errorln(err.Error())
 		return false
@@ -53,13 +56,25 @@ func DownloadDbFile() {
 		}
 	}()
 	logger.Infoln("正在从github下载题库文件！")
-	response, err := http.Get("https://github.com/johlanse/study_xxqg/releases/download/v1.0.36/QuestionBank.db")
-	if err != nil {
-		logger.Errorln("下载db文件错误" + err.Error())
-		return
+
+	callback := func(info req.DownloadInfo) {
+		fmt.Printf("download %.2f%%\n", float64(info.DownloadedSize)/float64(info.Response.ContentLength)*100.0)
 	}
-	data, _ := io.ReadAll(response.Body)
-	err = os.WriteFile("./QuestionBank.db", data, 0666)
+
+	_, err := GetClient().R().
+		SetOutputFile(constant.QuestionBankDBFile).
+		SetDownloadCallbackWithInterval(callback, time.Second).
+		Get("https://github.com/johlanse/study_xxqg/raw/main/conf/QuestionBank.db")
+
+	//response, err := http.Get("https://github.com/johlanse/study_xxqg/raw/main/conf/QuestionBank.db")
+	////response, err := http.Get("https://github.com/johlanse/study_xxqg/releases/download/v1.0.36/QuestionBank.db")
+	//if err != nil {
+	//	logger.Errorln("下载db文件错误" + err.Error())
+	//	return
+	//}
+	//data, _ := io.ReadAll(response.Body)
+	//err = os.WriteFile(constant.QuestionBankDBFile, data, 0666)
+
 	if err != nil {
 		logger.Errorln(err.Error())
 		return

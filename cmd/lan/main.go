@@ -18,6 +18,7 @@ import (
 	_ "xxqg-automate/internal/job"
 	"xxqg-automate/internal/study"
 	"xxqg-automate/internal/update"
+	"xxqg-automate/internal/util"
 
 	_ "xxqg-automate/internal/initial"
 )
@@ -90,6 +91,10 @@ func main() {
 		update.SelfUpdate("", VERSION)
 		logger.Infoln("请重启应用")
 		os.Exit(1)
+	}
+
+	if !util.CheckQuestionDB() {
+		util.DownloadDbFile()
 	}
 
 	task.Start()
