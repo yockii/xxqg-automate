@@ -119,7 +119,14 @@ func handleStatisticsNotify() {
 		}
 		needStatistics.Store(false)
 		// 发送到钉钉
-		sendToDingtalk("", fmt.Sprintf("%s 已完成, 学习中: %s", strings.Join(info.Finished, ","), strings.Join(info.Studying, ",")), 1)
+		sendToDingtalk("", fmt.Sprintf(
+			"已完成: %s \n 学习中: %s \n 等待学习: %s \n 已失效: %s",
+			strings.Join(info.Finished, ","),
+			strings.Join(info.Studying, ","),
+			strings.Join(info.Waiting, ","),
+			strings.Join(info.Expired, ","),
+		),
+			1)
 		return ctx.SendStatus(fiber.StatusOK)
 	})
 }
