@@ -211,7 +211,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 		case 1:
 			{
 				// 检测是否已经完成
-				if score.Content["daily"].CurrentScore >= score.Content["daily"].MaxScore {
+				if score.Content["daily"] != nil && score.Content["daily"].CurrentScore >= score.Content["daily"].MaxScore {
 					logger.Debugln("检测到每日答题已经完成，退出答题")
 					return
 				}
@@ -219,7 +219,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 		case 2:
 			{
 				// 检测是否已经完成
-				if score.Content["weekly"].CurrentScore >= score.Content["weekly"].MaxScore {
+				if score.Content["weekly"] != nil && score.Content["weekly"].CurrentScore >= score.Content["weekly"].MaxScore {
 					logger.Debugln("检测到每周答题已经完成，退出答题")
 					return
 				}
@@ -227,7 +227,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 		case 3:
 			{
 				// 检测是否已经完成
-				if score.Content["special"].CurrentScore >= score.Content["special"].MaxScore {
+				if score.Content["special"] != nil && score.Content["special"].CurrentScore >= score.Content["special"].MaxScore {
 					logger.Debugln("检测到专项答题已经完成，退出答题")
 					return
 				}
