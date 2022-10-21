@@ -15,7 +15,7 @@ import (
 	"xxqg-automate/internal/study"
 )
 
-func init() {
+func InitKeepAlive() {
 	task.AddFunc("@every 1m", keepAlive)
 }
 

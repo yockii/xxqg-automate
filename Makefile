@@ -19,7 +19,7 @@ build-wan:
 
 build-lan:
 		set GOOS=windows;GOARCH=amd64
-		go build -ldflags "-s -w -X main.VERSION=v1.0.0" -o target/xxqg_agent.exe cmd/lan/main.go
+		go build -ldflags "-s -w -X main.VERSION=v1.0.1" -o target/xxqg_agent.exe cmd/lan/main.go
 
 compress:
 	-upx --lzma target/*

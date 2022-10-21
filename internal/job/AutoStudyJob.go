@@ -20,7 +20,7 @@ import (
 	"xxqg-automate/internal/util"
 )
 
-func init() {
+func InitAutoStudy() {
 	// 加载已有的job
 	loadJobs()
 	task.AddFunc("0 0/3 6-23 * * *", func() {
@@ -96,6 +96,7 @@ func loadJobs() {
 		ants.Submit(func() {
 			startStudy(user, job)
 		})
+		time.Sleep(time.Second)
 	}
 }
 
