@@ -1,5 +1,7 @@
 package constant
 
+import "github.com/yockii/qscore/pkg/config"
+
 const (
 	DefaultRoleId     = "999999999"
 	DefaultRoleName   = "超级管理员"
@@ -11,6 +13,6 @@ const (
 	QuestionBankDBFile     = "./conf/QuestionBank.db"
 )
 
-const (
-	CommunicateHeaderKey = "yyyyyyoooooooccccccckkkkkkkiiiiiiiiiiiiii"
+var (
+	CommunicateHeaderKey = config.GetString("server.token")
 )
