@@ -56,7 +56,7 @@ func fetchServerInfo() {
 		}
 
 		var studying []*model.User
-		finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE last_study_time>? and (last_study_time>last_finish_time or last_finish_time is null)", time.Now().Format("2006-01-02"))
+		finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE last_study_time>? and last_study_time<? and (last_study_time>last_finish_time or last_finish_time is null)", time.Now().Format("2006-01-02"), time.Now())
 		err = zorm.Query(context.Background(), finder, &studying, nil)
 		if err != nil {
 			logger.Error(err)

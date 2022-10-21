@@ -73,10 +73,15 @@ func init() {
 func startStudy(user *model.User) {
 	randomDuration := time.Duration(rand.Intn(1000))
 	_, err := zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
-		return zorm.UpdateNotZeroValue(ctx, &model.User{
-			Id:            user.Id,
-			LastStudyTime: domain.DateTime(time.Now().Add(randomDuration * time.Second)),
-		})
+		finder := zorm.NewUpdateFinder(model.UserTableName).Append(
+			"last_study_time=?, last_score=?", domain.DateTime(time.Now().Add(randomDuration*time.Second)), 0).
+			Append("WHERE id=?", user.Id)
+		return zorm.UpdateFinder(ctx, finder)
+		//return zorm.UpdateNotZeroValue(ctx, &model.User{
+		//	Id:            user.Id,
+		//	LastStudyTime: domain.DateTime(time.Now().Add(randomDuration * time.Second)),
+		//	LastScore:     0,
+		//})
 	})
 	if err != nil {
 		logger.Errorln(err)

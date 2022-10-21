@@ -2,9 +2,11 @@ package job
 
 import (
 	"context"
+	"math/rand"
 	"time"
 
 	"gitee.com/chunanyong/zorm"
+	"github.com/panjf2000/ants/v2"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yockii/qscore/pkg/domain"
 	"github.com/yockii/qscore/pkg/task"
@@ -29,12 +31,19 @@ func keepAlive() {
 		return
 	}
 	for _, user := range users {
-		study.GetUserScore(study.TokenToCookies(user.Token))
-		zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
-			return zorm.UpdateNotZeroValue(ctx, &model.User{
-				Id:            user.Id,
-				LastCheckTime: domain.DateTime(time.Now()),
-			})
+		ants.Submit(func() {
+			doKeepAlive(user)
 		})
 	}
+}
+
+func doKeepAlive(user *model.User) {
+	time.Sleep(time.Duration(rand.Int63n(500)) * time.Second)
+	study.GetUserScore(study.TokenToCookies(user.Token))
+	zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
+		return zorm.UpdateNotZeroValue(ctx, &model.User{
+			Id:            user.Id,
+			LastCheckTime: domain.DateTime(time.Now()),
+		})
+	})
 }
