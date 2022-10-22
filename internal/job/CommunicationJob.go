@@ -16,7 +16,7 @@ import (
 	"xxqg-automate/internal/util"
 )
 
-func init() {
+func InitCommunication() {
 	// 不用task，而采用延迟的方式
 	ants.Submit(fetchServerInfo)
 }
@@ -56,7 +56,7 @@ func fetchServerInfo() {
 		}
 
 		var studying []*model.User
-		finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE last_study_time>? and last_study_time<? and (last_study_time>last_finish_time or last_finish_time is null)", time.Now().Format("2006-01-02"), time.Now())
+		finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE id in (SELECT user_id FROM " + model.JobTableName + "))")
 		err = zorm.Query(context.Background(), finder, &studying, nil)
 		if err != nil {
 			logger.Error(err)

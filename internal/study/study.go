@@ -27,8 +27,8 @@ type Data struct {
 	MaxScore     int `json:"max_score"`
 }
 
-func GetUserScore(cookies []*http.Cookie) (*Score, error) {
-	score := new(Score)
+func GetUserScore(cookies []*http.Cookie) (score *Score, tokenFailed bool, err error) {
+	score = new(Score)
 	var resp []byte
 
 	header := map[string]string{
@@ -39,7 +39,7 @@ func GetUserScore(cookies []*http.Cookie) (*Score, error) {
 	response, err := client.R().SetCookies(cookies...).SetHeaders(header).Get(constant.XxqgUrlTotalScore)
 	if err != nil {
 		logger.Errorln("获取用户总分错误" + err.Error())
-		return nil, err
+		return nil, false, err
 	}
 	resp = response.Bytes()
 
@@ -48,7 +48,7 @@ func GetUserScore(cookies []*http.Cookie) (*Score, error) {
 	response, err = client.R().SetCookies(cookies...).SetHeaders(header).Get(constant.XxqgUrlTodayTotalScore)
 	if err != nil {
 		log.Errorln("获取用户总分错误" + err.Error())
-		return nil, err
+		return nil, false, err
 	}
 	resp = response.Bytes()
 	score.TodayScore = int(gjson.GetBytes(resp, "data.score").Int())
@@ -56,10 +56,20 @@ func GetUserScore(cookies []*http.Cookie) (*Score, error) {
 	response, err = client.R().SetCookies(cookies...).SetHeaders(header).Get(constant.XxqgUrlRateScore)
 	if err != nil {
 		log.Errorln("获取用户总分错误" + err.Error())
-		return nil, err
+		return nil, false, err
 	}
 	resp = response.Bytes()
-	taskProgress := gjson.GetBytes(resp, "data.taskProgress").Array()
+	j := gjson.ParseBytes(resp)
+	taskProgress := j.Get("data.taskProgress").Array()
+	if len(taskProgress) == 0 {
+		if j.Get("code").Int() == 401 {
+			// 校验失败
+			return nil, true, nil
+		}
+
+		logger.Warnln("未获取到data.taskProgress: ", string(resp))
+		return nil, false, errors.New("未成功获取用户积分信息")
+	}
 	m := make(map[string]*Data, 7)
 	m[constant.Article] = &Data{
 		CurrentScore: int(taskProgress[0].Get("currentScore").Int()),
@@ -91,8 +101,7 @@ func GetUserScore(cookies []*http.Cookie) (*Score, error) {
 	}
 
 	score.Content = m
-
-	return score, err
+	return
 }
 
 type Link struct {

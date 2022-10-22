@@ -51,7 +51,7 @@ func (c *core) startLearnVideo(user *model.User, p *playwright.Page, score *Scor
 				}
 				time.Sleep(1 * time.Second)
 			}
-			score, _ = GetUserScore(TokenToCookies(user.Token))
+			score, _, _ = GetUserScore(TokenToCookies(user.Token))
 
 			if score.Content[constant.Video] != nil && score.Content[constant.Video].CurrentScore >= score.Content[constant.Video].MaxScore && score.Content["video_time"] != nil && score.Content["video_time"].CurrentScore >= score.Content["video_time"].MaxScore {
 				logger.Debugln("检测到本次视频学习分数已满，退出学习")

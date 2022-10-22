@@ -17,7 +17,7 @@ func (c *core) Learn(user *model.User, learnModule string) {
 		return
 	}
 
-	score, err := GetUserScore(TokenToCookies(user.Token))
+	score, _, err := GetUserScore(TokenToCookies(user.Token))
 	if err != nil {
 		logger.Errorln(err)
 		return
@@ -113,7 +113,7 @@ func (c *core) startLearnArticle(user *model.User, p *playwright.Page, score *Sc
 			}
 			time.Sleep(1 * time.Second)
 		}
-		score, _ = GetUserScore(TokenToCookies(user.Token))
+		score, _, _ = GetUserScore(TokenToCookies(user.Token))
 		if articleScore, ok := score.Content[constant.Article]; !ok || articleScore.CurrentScore >= articleScore.MaxScore {
 			logger.Debugln("检测到文章学习已完成，结束文章学习")
 			return

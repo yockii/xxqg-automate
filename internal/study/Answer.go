@@ -31,8 +31,8 @@ func (c *core) Answer(user *model.User, t int) {
 	if !c.browser.IsConnected() {
 		return
 	}
-	score, err := GetUserScore(TokenToCookies(user.Token))
-	if err != nil {
+	score, _, err := GetUserScore(TokenToCookies(user.Token))
+	if err != nil || score == nil {
 		logger.Errorln("积分获取失败，停止答题", err)
 		return
 	}
@@ -400,7 +400,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 				}
 			}
 		}
-		score, _ = GetUserScore(TokenToCookies(user.Token))
+		score, _, _ = GetUserScore(TokenToCookies(user.Token))
 	}
 }
 

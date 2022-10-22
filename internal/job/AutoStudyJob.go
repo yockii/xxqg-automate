@@ -40,7 +40,7 @@ func InitAutoStudy() {
 		lastTime = time.Now().Add(-1 * time.Hour)
 		var notFinished []*model.User
 		if err := zorm.Query(context.Background(),
-			zorm.NewSelectFinder(model.UserTableName).Append("WHERE last_study_time>? and last_study_time<? and (last_finish_time is null or last_finish_time<last_study_time)", time.Now().Format("2006-01-02"), lastTime),
+			zorm.NewSelectFinder(model.UserTableName).Append("WHERE last_study_time>? and last_study_time<? and (last_finish_time is null or last_finish_time<last_study_time) and status>0", time.Now().Format("2006-01-02"), lastTime),
 			&notFinished,
 			nil,
 		); err != nil {
@@ -145,7 +145,8 @@ func startStudy(user *model.User, jobs ...*model.Job) {
 
 	time.Sleep(5 * time.Second)
 
-	score, _ := study.GetUserScore(study.TokenToCookies(user.Token))
+	score, _, _ := study.GetUserScore(study.TokenToCookies(user.Token))
+
 	_, err := zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
 		return zorm.UpdateNotZeroValue(ctx, &model.User{
 			Id:             user.Id,

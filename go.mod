@@ -9,7 +9,6 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/gofiber/fiber/v2 v2.23.0
 	github.com/google/uuid v1.1.2
-	github.com/huoxue1/xdaemon v0.0.0-20221003093816-b336469d0ae8
 	github.com/imroc/req/v3 v3.24.0
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/panjf2000/ants/v2 v2.5.0

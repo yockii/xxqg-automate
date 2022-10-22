@@ -12,7 +12,6 @@ import (
 
 	"xxqg-automate/internal/controller/lan"
 	"xxqg-automate/internal/job"
-	_ "xxqg-automate/internal/job"
 	"xxqg-automate/internal/study"
 	"xxqg-automate/internal/update"
 	"xxqg-automate/internal/util"
@@ -57,6 +56,7 @@ func main() {
 
 	job.InitAutoStudy()
 	job.InitKeepAlive()
+	job.InitCommunication()
 
 	task.Start()
 	defer task.Stop()

@@ -39,11 +39,25 @@ func keepAlive() {
 
 func doKeepAlive(user *model.User) {
 	time.Sleep(time.Duration(rand.Int63n(500)) * time.Second)
-	study.GetUserScore(study.TokenToCookies(user.Token))
-	zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
-		return zorm.UpdateNotZeroValue(ctx, &model.User{
-			Id:            user.Id,
-			LastCheckTime: domain.DateTime(time.Now()),
+	_, failed, err := study.GetUserScore(study.TokenToCookies(user.Token))
+	if err != nil {
+		logger.Errorln(err)
+		return
+	}
+	if failed {
+		zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
+			return zorm.UpdateNotZeroValue(ctx, &model.User{
+				Id:            user.Id,
+				LastCheckTime: domain.DateTime(time.Now()),
+				Status:        -1,
+			})
 		})
-	})
+	} else {
+		zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
+			return zorm.UpdateNotZeroValue(ctx, &model.User{
+				Id:            user.Id,
+				LastCheckTime: domain.DateTime(time.Now()),
+			})
+		})
+	}
 }
