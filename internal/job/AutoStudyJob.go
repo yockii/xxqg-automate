@@ -100,6 +100,11 @@ func loadJobs() {
 	}
 }
 
+func isToday(d time.Time) bool {
+	now := time.Now()
+	return d.Year() == now.Year() && d.Month() == now.Month() && d.Day() == now.Day()
+}
+
 func startStudy(user *model.User, jobs ...*model.Job) {
 	var job *model.Job
 	if len(jobs) == 0 {
@@ -115,10 +120,18 @@ func startStudy(user *model.User, jobs ...*model.Job) {
 	if time.Time(user.LastStudyTime).After(time.Now()) {
 		time.Sleep(time.Time(user.LastStudyTime).Sub(time.Now()))
 	} else {
-		randomDuration := time.Duration(rand.Intn(1000))
+		// 学习时间在当前时间之前
+		var randomDuration time.Duration
+		if isToday(time.Time(user.LastStudyTime)) {
+			// 今天的日期，随机延长120s 2分钟
+			randomDuration = time.Duration(rand.Intn(120)) * time.Second
+		} else {
+			// 今天以前的日期，随机延长1200秒 20分钟
+			randomDuration = time.Duration(rand.Intn(1200)) * time.Second
+		}
 		_, err := zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
 			finder := zorm.NewUpdateFinder(model.UserTableName).Append(
-				"last_study_time=?, last_score=?", domain.DateTime(time.Now().Add(randomDuration*time.Second)), 0).
+				"last_study_time=?, last_score=?", domain.DateTime(time.Now().Add(randomDuration)), 0).
 				Append("WHERE id=?", user.Id)
 			return zorm.UpdateFinder(ctx, finder)
 			//return zorm.UpdateNotZeroValue(ctx, &model.User{
@@ -133,7 +146,7 @@ func startStudy(user *model.User, jobs ...*model.Job) {
 		}
 
 		// 随机休眠再开始学习
-		time.Sleep(randomDuration * time.Second)
+		time.Sleep(randomDuration)
 	}
 
 	logger.Infoln(user.Nick, "开始学习")

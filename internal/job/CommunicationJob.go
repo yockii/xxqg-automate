@@ -56,7 +56,7 @@ func fetchServerInfo() {
 		}
 
 		var studying []*model.User
-		finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE id in (SELECT user_id FROM " + model.JobTableName + "))")
+		finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE id in (SELECT user_id FROM " + model.JobTableName + ")")
 		err = zorm.Query(context.Background(), finder, &studying, nil)
 		if err != nil {
 			logger.Error(err)
@@ -70,7 +70,7 @@ func fetchServerInfo() {
 		}
 
 		var waiting []*model.User
-		finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE status>0 and (last_study_time<? or last_study_time>?)", time.Now().Format("2006-01-02"), time.Now())
+		finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE status>0 and last_study_time<?", time.Now().Format("2006-01-02"))
 		err = zorm.Query(context.Background(), finder, &waiting, nil)
 		if err != nil {
 			logger.Error(err)
