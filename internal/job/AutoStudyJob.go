@@ -25,7 +25,7 @@ func InitAutoStudy() {
 	loadJobs()
 	task.AddFunc("0 0/3 6-23 * * *", func() {
 		// 1、查出需要执行学习的用户
-		lastTime := time.Now().Add(-20 * time.Hour)
+		lastTime := time.Now().Add(-18 * time.Hour)
 		var users []*model.User
 		if err := zorm.Query(context.Background(),
 			zorm.NewSelectFinder(model.UserTableName).Append("WHERE (last_study_time is null or last_study_time<?) and status>0", lastTime),
