@@ -100,7 +100,7 @@ func (_ *jobService) FindList(ctx context.Context, finder *zorm.Finder, page *zo
 	return jobList, nil
 }
 
-func (_ *jobService) DeleteByUserId(ctx context.Context, userId string) error {
+func (_ *jobService) DeleteByUserId(ctx context.Context, userId string, status ...int) error {
 	//id不能为空
 	if len(userId) < 1 {
 		return errors.New("id不能为空")
@@ -110,7 +110,7 @@ func (_ *jobService) DeleteByUserId(ctx context.Context, userId string) error {
 	_, errDeleteActivity := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
 
 		//事务下的业务代码开始
-		finder := zorm.NewDeleteFinder(model.JobTableName).Append(" WHERE user_id=?", userId)
+		finder := zorm.NewDeleteFinder(model.JobTableName).Append(" WHERE user_id=? and status in (?)", userId, status)
 		_, errDeleteActivity := zorm.UpdateFinder(ctx, finder)
 
 		if errDeleteActivity != nil {

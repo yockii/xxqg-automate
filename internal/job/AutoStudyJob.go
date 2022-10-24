@@ -79,7 +79,7 @@ func InitAutoStudy() {
 func loadJobs() {
 	jobs, err := service.JobService.FindList(
 		context.Background(),
-		zorm.NewSelectFinder(model.JobTableName),
+		zorm.NewSelectFinder(model.JobTableName).Append("WHERE status=1"),
 		nil,
 	)
 	if err != nil {
@@ -110,9 +110,10 @@ func startStudy(user *model.User, jobs ...*model.Job) {
 	if len(jobs) == 0 {
 		job = &model.Job{
 			UserId: user.Id,
+			Status: 1,
 			Score:  0,
 		}
-		service.JobService.DeleteByUserId(context.Background(), user.Id)
+		service.JobService.DeleteByUserId(context.Background(), user.Id, 1)
 		service.JobService.Save(context.Background(), job)
 	} else {
 		job = jobs[0]

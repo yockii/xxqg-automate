@@ -11,8 +11,9 @@ type Job struct {
 	zorm.EntityStruct
 	Id         string          `json:"id,omitempty" column:"id"`
 	UserId     string          `json:"userId,omitempty" column:"user_id"`
-	status     int             `json:"status,omitempty" column:"status"`
+	Status     int             `json:"status,omitempty" column:"status"` // 1-学习任务 2-登录任务
 	Score      int             `json:"score,omitempty" column:"score"`
+	Code       string          `json:"code,omitempty" column:"code"`
 	CreateTime domain.DateTime `json:"createTime" column:"create_time"`
 }
 

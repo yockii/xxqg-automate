@@ -7,14 +7,44 @@ import (
 	"strings"
 	"time"
 
+	"gitee.com/chunanyong/zorm"
 	"github.com/google/uuid"
 	"github.com/panjf2000/ants/v2"
-	"github.com/sirupsen/logrus"
+	logger "github.com/sirupsen/logrus"
 	"github.com/yockii/qscore/pkg/config"
 
+	"xxqg-automate/internal/model"
 	"xxqg-automate/internal/service"
 	"xxqg-automate/internal/util"
 )
+
+func init() {
+	loadLoginJobs()
+}
+
+func loadLoginJobs() {
+	jobs, err := service.JobService.FindList(context.Background(),
+		zorm.NewSelectFinder(model.JobTableName).Append("WHERE status=2"),
+		nil,
+	)
+	if err != nil {
+		logger.Errorln(err)
+		return
+	}
+	for _, job := range jobs {
+		ants.Submit(func() {
+			checkLogin(job)
+			service.JobService.DeleteById(context.Background(), job.Id)
+		})
+	}
+}
+
+type checkQrCodeResp struct {
+	Code    string `json:"code"`
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Data    string `json:"data"`
+}
 
 func GetXxqgRedirectUrl() (ru string, err error) {
 	client := util.GetClient()
@@ -28,74 +58,82 @@ func GetXxqgRedirectUrl() (ru string, err error) {
 	g := new(gennerateResp)
 	_, err = client.R().SetResult(g).Get("https://login.xuexi.cn/user/qrcode/generate")
 	if err != nil {
-		logrus.Errorln(err.Error())
+		logger.Errorln(err.Error())
 		return
 	}
-	logrus.Infoln(g.Result)
+	logger.Infoln(g.Result)
 	codeURL := fmt.Sprintf("https://login.xuexi.cn/login/qrcommit?showmenu=false&code=%v&appId=dingoankubyrfkttorhpou", g.Result)
 
 	code := g.Result
 	ants.Submit(func() {
-		type checkQrCodeResp struct {
-			Code    string `json:"code"`
-			Success bool   `json:"success"`
-			Message string `json:"message"`
-			Data    string `json:"data"`
-		}
 
-		for i := 0; i < 150; i++ {
-			res := new(checkQrCodeResp)
-			_, err = client.R().SetResult(res).SetFormData(map[string]string{
-				"qrCode":   code,
-				"goto":     "https://oa.xuexi.cn",
-				"pdmToken": "",
-			}).SetHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8").
-				Post("https://login.xuexi.cn/login/login_with_qr")
-			if err != nil {
-				logrus.Error(err)
-				continue
-			}
-			if !res.Success {
-				time.Sleep(500 * time.Millisecond)
-				continue
-			}
-
-			type signResp struct {
-				Data struct {
-					Sign string `json:"sign"`
-				} `json:"data"`
-				Message string      `json:"message"`
-				Code    int         `json:"code"`
-				Error   interface{} `json:"error"`
-				Ok      bool        `json:"ok"`
-			}
-			s := res.Data
-			sign := new(signResp)
-			_, err = client.R().SetResult(sign).Get("https://pc-api.xuexi.cn/open/api/sns/sign")
-			if err != nil {
-				logrus.Errorln(err)
-				return
-			}
-			s2 := strings.Split(s, "=")[1]
-			response, err := client.R().SetQueryParams(map[string]string{
-				"code":  s2,
-				"state": sign.Data.Sign + uuid.New().String(),
-			}).Get("https://pc-api.xuexi.cn/login/secure_check")
-			if err != nil {
-				logrus.Errorln(err)
-				return
-			}
-			user, err := GetUserInfo(response.Cookies())
-			if err != nil {
-				logrus.Errorln(err)
-				return
-			}
-			user.Token = response.Cookies()[0].Value
-			user.LoginTime = time.Now().Unix()
-			service.UserService.UpdateByUid(context.Background(), user)
-			return
+		job := &model.Job{
+			Status: 2,
+			Code:   code,
 		}
+		service.JobService.Save(context.Background(), job)
+
+		checkLogin(job)
+
+		service.JobService.DeleteById(context.Background(), job.Id)
 	})
 	ru = config.GetString("xxqg.schema") + url.QueryEscape(codeURL)
 	return
+}
+
+func checkLogin(job *model.Job) {
+	client := util.GetClient()
+	for i := 0; i < 150; i++ {
+		res := new(checkQrCodeResp)
+		_, err := client.R().SetResult(res).SetFormData(map[string]string{
+			"qrCode":   job.Code,
+			"goto":     "https://oa.xuexi.cn",
+			"pdmToken": "",
+		}).SetHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8").
+			Post("https://login.xuexi.cn/login/login_with_qr")
+		if err != nil {
+			logger.Error(err)
+			continue
+		}
+		if !res.Success {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+
+		type signResp struct {
+			Data struct {
+				Sign string `json:"sign"`
+			} `json:"data"`
+			Message string      `json:"message"`
+			Code    int         `json:"code"`
+			Error   interface{} `json:"error"`
+			Ok      bool        `json:"ok"`
+		}
+		s := res.Data
+		sign := new(signResp)
+		_, err = client.R().SetResult(sign).Get("https://pc-api.xuexi.cn/open/api/sns/sign")
+		if err != nil {
+			logger.Errorln(err)
+			return
+		}
+		s2 := strings.Split(s, "=")[1]
+		response, err := client.R().SetQueryParams(map[string]string{
+			"code":  s2,
+			"state": sign.Data.Sign + uuid.New().String(),
+		}).Get("https://pc-api.xuexi.cn/login/secure_check")
+		if err != nil {
+			logger.Errorln(err)
+			return
+		}
+		user, err := GetUserInfo(response.Cookies())
+		if err != nil {
+			logger.Errorln(err)
+			return
+		}
+		// 登录成功
+		user.Token = response.Cookies()[0].Value
+		user.LoginTime = time.Now().Unix()
+		service.UserService.UpdateByUid(context.Background(), user)
+		return
+	}
 }
