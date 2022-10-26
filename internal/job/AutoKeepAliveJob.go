@@ -8,15 +8,19 @@ import (
 	"gitee.com/chunanyong/zorm"
 	"github.com/panjf2000/ants/v2"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yockii/qscore/pkg/config"
 	"github.com/yockii/qscore/pkg/domain"
 	"github.com/yockii/qscore/pkg/task"
 
+	"xxqg-automate/internal/constant"
+	internalDomain "xxqg-automate/internal/domain/wan"
 	"xxqg-automate/internal/model"
 	"xxqg-automate/internal/study"
+	"xxqg-automate/internal/util"
 )
 
 func InitKeepAlive() {
-	task.AddFunc("@every 1m", keepAlive)
+	task.AddFunc("0 0/2 7-22 * * *", keepAlive)
 }
 
 func keepAlive() {
@@ -52,6 +56,11 @@ func doKeepAlive(user *model.User) {
 				Status:        -1,
 			})
 		})
+		util.GetClient().R().
+			SetHeader("token", constant.CommunicateHeaderKey).
+			SetBody(&internalDomain.ExpiredInfo{
+				Nick: user.Nick,
+			}).Post(config.GetString("communicate.baseUrl") + "/api/v1/expiredNotify")
 	} else {
 		zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
 			return zorm.UpdateNotZeroValue(ctx, &model.User{
