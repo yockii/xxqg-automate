@@ -11,6 +11,9 @@
 # 任务端
 该端用于实际执行任务，放在了本地环境，这样可以确保非服务器IP在学习
 
+# 使用说明
+请移步wiki [使用说明](https://github.com/yockii/xxqg-automate/wiki/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E)
+
 # 鸣谢
 本项目借鉴了以下仓库，感谢作者：
 
