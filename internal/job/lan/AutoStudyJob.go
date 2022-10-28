@@ -64,11 +64,13 @@ func InitAutoStudy() {
 						})
 						return nil, nil
 					})
-					util.GetClient().R().
-						SetHeader("token", constant.CommunicateHeaderKey).
-						SetBody(&internalDomain.ExpiredInfo{
-							Nick: user.Nick,
-						}).Post(config.GetString("communicate.baseUrl") + "/api/v1/expiredNotify")
+					if config.GetBool("xxqg.expireNotify") {
+						util.GetClient().R().
+							SetHeader("token", constant.CommunicateHeaderKey).
+							SetBody(&internalDomain.ExpiredInfo{
+								Nick: user.Nick,
+							}).Post(config.GetString("communicate.baseUrl") + "/api/v1/expiredNotify")
+					}
 				}
 			}
 		}

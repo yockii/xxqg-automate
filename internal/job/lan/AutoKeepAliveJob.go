@@ -56,11 +56,13 @@ func doKeepAlive(user *model.User) {
 				Status:        -1,
 			})
 		})
-		util.GetClient().R().
-			SetHeader("token", constant.CommunicateHeaderKey).
-			SetBody(&internalDomain.ExpiredInfo{
-				Nick: user.Nick,
-			}).Post(config.GetString("communicate.baseUrl") + "/api/v1/expiredNotify")
+		if config.GetBool("xxqg.expireNotify") {
+			util.GetClient().R().
+				SetHeader("token", constant.CommunicateHeaderKey).
+				SetBody(&internalDomain.ExpiredInfo{
+					Nick: user.Nick,
+				}).Post(config.GetString("communicate.baseUrl") + "/api/v1/expiredNotify")
+		}
 	} else {
 		zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
 			return zorm.UpdateNotZeroValue(ctx, &model.User{
