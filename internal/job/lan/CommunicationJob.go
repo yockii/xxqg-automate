@@ -33,6 +33,7 @@ func fetchServerInfo() {
 		logger.Errorln(err)
 		return
 	}
+	//logger.Debugln(resp.ToString())
 	if result.NeedLink {
 		logger.Debugln("需要新的登录链接")
 		var link string
@@ -47,6 +48,7 @@ func fetchServerInfo() {
 		}
 	}
 	if result.NeedStatistics {
+		logger.Debugln("需要统计信息")
 		// 查询统计信息，今日完成情况
 		var finished []*model.User
 		finder := zorm.NewSelectFinder(model.UserTableName).Append("WHERE last_finish_time>?", time.Now().Format("2006-01-02"))
@@ -77,7 +79,7 @@ func fetchServerInfo() {
 		}
 
 		var notFinished []*model.User
-		finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE score=0")
+		finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE last_score=0")
 		err = zorm.Query(context.Background(), finder, &notFinished, nil)
 		if err != nil {
 			logger.Error(err)

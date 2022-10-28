@@ -25,3 +25,9 @@ type FinishInfo struct {
 type ExpiredInfo struct {
 	Nick string `json:"nick,omitempty"`
 }
+
+type SendToDingUser struct {
+	UserId   string `json:"userId,omitempty"`
+	MsgKey   string `json:"msgKey,omitempty"`
+	MsgParam string `json:"msgParam,omitempty"`
+}

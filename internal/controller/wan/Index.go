@@ -313,3 +313,24 @@ func sendLinkedMsg(atUserId string, link string) {
 		return
 	}
 }
+
+func sendToDingUser(userId string, msgType string, content string) {
+	accessToken := ""
+	found, at := cache.DefaultCache.Get(constant.DingtalkAccessToken)
+	if !found {
+		accessToken = job.RefreshAccessToken()
+	} else {
+		accessToken = at.(string)
+	}
+	resp, err := util.GetClient().R().SetHeader("x-acs-dingtalk-access-token", accessToken).SetBody(map[string]interface{}{
+		"robotCode": config.GetString("dingtalk.appKey"),
+		"userIds":   []string{userId},
+		"msgKey":    msgType,
+		"msgParam":  content,
+	}).Post(constant.DingtalkApiBaseUrl + "/v1.0/robot/oToMessages/batchSend")
+	if err != nil {
+		logger.Errorln(err)
+		return
+	}
+	logger.Debugf(resp.ToString())
+}
