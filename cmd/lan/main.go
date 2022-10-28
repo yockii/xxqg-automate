@@ -11,7 +11,7 @@ import (
 	"github.com/yockii/qscore/pkg/task"
 
 	"xxqg-automate/internal/controller/lan"
-	"xxqg-automate/internal/job"
+	job "xxqg-automate/internal/job/lan"
 	"xxqg-automate/internal/study"
 	"xxqg-automate/internal/update"
 	"xxqg-automate/internal/util"

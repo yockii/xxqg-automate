@@ -6,10 +6,11 @@ type StatusAsk struct {
 }
 
 type StatisticsInfo struct {
-	Finished []string `json:"finished,omitempty"`
-	Studying []string `json:"studying,omitempty"`
-	Expired  []string `json:"expired,omitempty"`
-	Waiting  []string `json:"waiting,omitempty"`
+	Finished    []string `json:"finished,omitempty"`
+	Studying    []string `json:"studying,omitempty"`
+	Expired     []string `json:"expired,omitempty"`
+	Waiting     []string `json:"waiting,omitempty"`
+	NotFinished []string `json:"notFinished,omitempty"`
 }
 
 type LinkInfo struct {

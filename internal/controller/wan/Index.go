@@ -14,8 +14,10 @@ import (
 	"github.com/yockii/qscore/pkg/config"
 	"github.com/yockii/qscore/pkg/server"
 
+	"xxqg-automate/internal/cache"
 	"xxqg-automate/internal/constant"
 	"xxqg-automate/internal/domain/wan"
+	job "xxqg-automate/internal/job/wan"
 	"xxqg-automate/internal/util"
 )
 
@@ -26,6 +28,7 @@ import (
 // 3、需要统计数据
 var loginReq []string
 var needStatistics atomic.Bool
+var bindUser = make(map[string]string) // key=钉钉id value=名字
 var locker sync.Mutex
 
 func InitRouter() {
@@ -42,6 +45,19 @@ func InitRouter() {
 	handleStatisticsNotify()
 	handleExpiredNotify()
 	handleLoginSuccessNotify()
+	handleSendDingRequest()
+}
+
+func handleSendDingRequest() {
+	server.Post("/api/v1/sendToDingtalkUser", func(ctx *fiber.Ctx) error {
+		req := new(wan.SendToDingUser)
+		if err := ctx.BodyParser(req); err != nil {
+			logger.Errorln(err)
+			return ctx.SendStatus(fiber.StatusBadRequest)
+		}
+		sendToDingUser(req.UserId, req.MsgKey, req.MsgParam)
+		return ctx.SendStatus(fiber.StatusOK)
+	})
 }
 
 func dingtalkSign(timestamp, secret string) string {
@@ -87,8 +103,8 @@ func handleDingtalkCall() {
 			loginReq = append(loginReq, data.SenderStaffId)
 		} else if strings.Contains(data.Text.Content, "统计") {
 			needStatistics.Store(true)
-		} else if strings.Contains(data.Text.Content, "测试") {
-			sendCommonText(data.SenderStaffId, "测试")
+		} else if strings.Contains(data.Text.Content, "绑定") {
+			bindUser[data.SenderStaffId] = strings.TrimSpace(strings.ReplaceAll(data.Text.Content, "绑定 ", ""))
 		}
 		return ctx.SendStatus(fiber.StatusOK)
 	})
@@ -122,11 +138,17 @@ func handleStatisticsNotify() {
 		needStatistics.Store(false)
 		// 发送到钉钉
 		sendToDingtalk("", fmt.Sprintf(
-			"已完成: %s \n 学习中: %s \n 等待学习: %s \n 已失效: %s",
+			"已完成[%d]: %s \n 学习中[%d]: %s \n 等待学习[%d]: %s \n 已失效[%d]: %s \n 未完成[%d]: %s",
+			len(info.Finished),
 			strings.Join(info.Finished, ","),
+			len(info.Studying),
 			strings.Join(info.Studying, ","),
+			len(info.Waiting),
 			strings.Join(info.Waiting, ","),
+			len(info.Expired),
 			strings.Join(info.Expired, ","),
+			len(info.NotFinished),
+			strings.Join(info.NotFinished, ","),
 		),
 			1)
 		return ctx.SendStatus(fiber.StatusOK)

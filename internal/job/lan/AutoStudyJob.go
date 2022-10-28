@@ -1,4 +1,4 @@
-package job
+package lan
 
 import (
 	"context"
@@ -51,7 +51,6 @@ func InitAutoStudy() {
 		// 开始学习
 		for _, user := range users {
 			if user.Token != "" {
-				// 看看2小时内有没有job正在运行
 				if ok, _ := study.CheckUserCookie(study.TokenToCookies(user.Token)); ok {
 					ants.Submit(func() {
 						startStudy(user)
@@ -127,8 +126,8 @@ func startStudy(user *model.User, jobs ...*model.Job) {
 			// 今天的日期，随机延长120s 2分钟
 			randomDuration = time.Duration(rand.Intn(120)) * time.Second
 		} else {
-			// 今天以前的日期，随机延长1200秒 20分钟
-			randomDuration = time.Duration(rand.Intn(1200)) * time.Second
+			// 今天以前的日期，随机延长1800秒 30分钟
+			randomDuration = time.Duration(rand.Intn(1800)) * time.Second
 		}
 		_, err := zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
 			finder := zorm.NewUpdateFinder(model.UserTableName).Append(

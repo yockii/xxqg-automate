@@ -1,4 +1,4 @@
-package job
+package lan
 
 import (
 	"github.com/yockii/qscore/pkg/task"

@@ -1,4 +1,4 @@
-package job
+package lan
 
 import (
 	"context"
@@ -76,6 +76,13 @@ func fetchServerInfo() {
 			logger.Error(err)
 		}
 
+		var notFinished []*model.User
+		finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE score=0")
+		err = zorm.Query(context.Background(), finder, &notFinished, nil)
+		if err != nil {
+			logger.Error(err)
+		}
+
 		info := new(wan.StatisticsInfo)
 		for _, u := range finished {
 			info.Finished = append(info.Finished, u.Nick)
@@ -88,6 +95,9 @@ func fetchServerInfo() {
 		}
 		for _, u := range waiting {
 			info.Waiting = append(info.Waiting, u.Nick)
+		}
+		for _, u := range notFinished {
+			info.NotFinished = append(info.NotFinished, u.Nick)
 		}
 		util.GetClient().R().
 			SetHeader("token", constant.CommunicateHeaderKey).
