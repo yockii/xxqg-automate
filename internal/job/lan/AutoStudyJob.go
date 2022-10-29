@@ -25,7 +25,7 @@ func InitAutoStudy() {
 	loadJobs()
 	task.AddFunc("0 0/3 6-23 * * *", func() {
 		// 1、查出需要执行学习的用户
-		lastTime := time.Now().Add(-18 * time.Hour)
+		lastTime := time.Now().Add(-20 * time.Hour)
 		var users []*model.User
 		if err := zorm.Query(context.Background(),
 			zorm.NewSelectFinder(model.UserTableName).Append("WHERE (last_study_time is null or last_study_time<?) and status>0", lastTime),
@@ -128,8 +128,8 @@ func startStudy(user *model.User, jobs ...*model.Job) {
 			// 今天的日期，随机延长120s 2分钟
 			randomDuration = time.Duration(rand.Intn(120)) * time.Second
 		} else {
-			// 今天以前的日期，随机延长1800秒 30分钟
-			randomDuration = time.Duration(rand.Intn(1800)) * time.Second
+			// 今天以前的日期，随机延长60 * 120秒 120分钟
+			randomDuration = time.Duration(rand.Intn(60*120)) * time.Second
 		}
 		_, err := zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
 			finder := zorm.NewUpdateFinder(model.UserTableName).Append(
