@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/imroc/req/v3"
+	"github.com/panjf2000/ants/v2"
 	"github.com/playwright-community/playwright-go"
 	logger "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
@@ -28,6 +29,16 @@ div.my-points-section > div.my-points-content > div:nth-child(5) > div.my-points
 
 // Answer 答题 1-每日 2-每周 3-专项
 func (c *core) Answer(user *model.User, t int) {
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Errorln("答题发生异常恢复!", err)
+			// 尝试重新启动
+			ants.Submit(func() {
+				c.Answer(user, t)
+			})
+		}
+	}()
+
 	if !c.browser.IsConnected() {
 		return
 	}
