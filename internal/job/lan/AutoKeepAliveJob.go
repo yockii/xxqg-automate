@@ -50,11 +50,15 @@ func doKeepAlive(user *model.User) {
 	}
 	if failed {
 		zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
-			return zorm.UpdateNotZeroValue(ctx, &model.User{
+			_, err = zorm.UpdateNotZeroValue(ctx, &model.User{
 				Id:            user.Id,
 				LastCheckTime: domain.DateTime(time.Now()),
 				Status:        -1,
 			})
+			if err != nil {
+				return nil, err
+			}
+			return zorm.Delete(ctx, &model.Job{UserId: user.Id, Status: 1})
 		})
 		if config.GetBool("xxqg.expireNotify") {
 			util.GetClient().R().
