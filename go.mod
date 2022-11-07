@@ -2,8 +2,6 @@ module xxqg-automate
 
 go 1.19
 
-replace github.com/yockii/qscore => E:\\projects\\github.com\\yockii\\qscore
-
 require (
 	gitee.com/chunanyong/zorm v1.6.1
 	github.com/dustin/go-humanize v1.0.0
@@ -16,7 +14,6 @@ require (
 	github.com/prometheus/common v0.7.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/tidwall/gjson v1.14.3
-	github.com/yockii/qscore v0.0.0-20221011043027-d41dbce56371
 )
 
 require (
@@ -75,6 +72,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.31.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
+	github.com/yockii/qscore v0.0.0-20221107040215-7ca57c896227 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20220802222814-0bcc04d9c69b // indirect
