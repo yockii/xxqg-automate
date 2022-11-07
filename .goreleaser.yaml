@@ -18,6 +18,9 @@ builds:
       - windows
       - darwin
       - linux
+    goarch:
+      - amd64
+      - arm64
 
   - id: "xxqg-server"
     main: ./cmd/wan/main.go
@@ -28,6 +31,10 @@ builds:
       - linux
       - windows
       - darwin
+    goarch:
+      - amd64
+      - arm64
+
 archives:
   - id: "xxqg-agent"
     builds:
