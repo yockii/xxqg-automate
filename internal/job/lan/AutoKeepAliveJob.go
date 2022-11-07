@@ -13,7 +13,7 @@ import (
 	"github.com/yockii/qscore/pkg/task"
 
 	"xxqg-automate/internal/constant"
-	internalDomain "xxqg-automate/internal/domain/wan"
+	internalDomain "xxqg-automate/internal/domain"
 	"xxqg-automate/internal/model"
 	"xxqg-automate/internal/study"
 	"xxqg-automate/internal/util"
@@ -60,12 +60,14 @@ func doKeepAlive(user *model.User) {
 			}
 			return zorm.Delete(ctx, &model.Job{UserId: user.Id, Status: 1})
 		})
-		if config.GetBool("xxqg.expireNotify") {
-			util.GetClient().R().
-				SetHeader("token", constant.CommunicateHeaderKey).
-				SetBody(&internalDomain.ExpiredInfo{
-					Nick: user.Nick,
-				}).Post(config.GetString("communicate.baseUrl") + "/api/v1/expiredNotify")
+		if config.GetString("communicate.baseUrl") != "" {
+			if config.GetBool("xxqg.expireNotify") {
+				util.GetClient().R().
+					SetHeader("token", constant.CommunicateHeaderKey).
+					SetBody(&internalDomain.ExpiredInfo{
+						Nick: user.Nick,
+					}).Post(config.GetString("communicate.baseUrl") + "/api/v1/expiredNotify")
+			}
 		}
 	} else {
 		zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {

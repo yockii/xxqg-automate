@@ -1,4 +1,4 @@
-package wan
+package domain
 
 type StatusAsk struct {
 	NeedLink       bool `json:"needLink,omitempty"`

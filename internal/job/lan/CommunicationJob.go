@@ -1,30 +1,30 @@
 package lan
 
 import (
-	"context"
 	"time"
 
-	"gitee.com/chunanyong/zorm"
 	"github.com/panjf2000/ants/v2"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yockii/qscore/pkg/config"
 
 	"xxqg-automate/internal/constant"
-	"xxqg-automate/internal/domain/wan"
-	"xxqg-automate/internal/model"
+	"xxqg-automate/internal/domain"
+	"xxqg-automate/internal/service"
 	"xxqg-automate/internal/study"
 	"xxqg-automate/internal/util"
 )
 
 func InitCommunication() {
-	// 不用task，而采用延迟的方式
-	ants.Submit(fetchServerInfo)
+	if config.GetString("communicate.baseUrl") != "" {
+		// 不用task，而采用延迟的方式
+		ants.Submit(fetchServerInfo)
+	}
 }
 
 func fetchServerInfo() {
 	time.Sleep(5 * time.Second)
 	defer ants.Submit(fetchServerInfo)
-	result := new(wan.StatusAsk)
+	result := new(domain.StatusAsk)
 	_, err := util.GetClient().R().
 		SetHeader("token", constant.CommunicateHeaderKey).
 		SetResult(result).
@@ -43,64 +43,14 @@ func fetchServerInfo() {
 		} else {
 			resp, _ := util.GetClient().R().
 				SetHeader("token", constant.CommunicateHeaderKey).
-				SetBody(&wan.LinkInfo{Link: link}).Post(config.GetString("communicate.baseUrl") + "/api/v1/newLink")
+				SetBody(&domain.LinkInfo{Link: link}).Post(config.GetString("communicate.baseUrl") + "/api/v1/newLink")
 			logger.Debugln(resp.ToString())
 		}
 	}
 	if result.NeedStatistics {
 		logger.Debugln("需要统计信息")
 		// 查询统计信息，今日完成情况
-		var finished []*model.User
-		finder := zorm.NewSelectFinder(model.UserTableName).Append("WHERE last_finish_time>?", time.Now().Format("2006-01-02"))
-		err = zorm.Query(context.Background(), finder, &finished, nil)
-		if err != nil {
-			logger.Error(err)
-		}
-
-		var studying []*model.User
-		finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE id in (SELECT user_id FROM " + model.JobTableName + ")")
-		err = zorm.Query(context.Background(), finder, &studying, nil)
-		if err != nil {
-			logger.Error(err)
-		}
-
-		var expired []*model.User
-		finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE status=-1")
-		err = zorm.Query(context.Background(), finder, &expired, nil)
-		if err != nil {
-			logger.Error(err)
-		}
-
-		var waiting []*model.User
-		finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE status>0 and last_study_time<?", time.Now().Format("2006-01-02"))
-		err = zorm.Query(context.Background(), finder, &waiting, nil)
-		if err != nil {
-			logger.Error(err)
-		}
-
-		var notFinished []*model.User
-		finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE last_score=0")
-		err = zorm.Query(context.Background(), finder, &notFinished, nil)
-		if err != nil {
-			logger.Error(err)
-		}
-
-		info := new(wan.StatisticsInfo)
-		for _, u := range finished {
-			info.Finished = append(info.Finished, u.Nick)
-		}
-		for _, u := range studying {
-			info.Studying = append(info.Studying, u.Nick)
-		}
-		for _, u := range expired {
-			info.Expired = append(info.Expired, u.Nick)
-		}
-		for _, u := range waiting {
-			info.Waiting = append(info.Waiting, u.Nick)
-		}
-		for _, u := range notFinished {
-			info.NotFinished = append(info.NotFinished, u.Nick)
-		}
+		info := service.GetStatisticsInfo()
 		util.GetClient().R().
 			SetHeader("token", constant.CommunicateHeaderKey).
 			SetBody(info).Post(config.GetString("communicate.baseUrl") + "/api/v1/statisticsNotify")

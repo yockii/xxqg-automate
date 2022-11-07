@@ -10,7 +10,7 @@ import (
 	"github.com/yockii/qscore/pkg/config"
 
 	"xxqg-automate/internal/constant"
-	internalDomain "xxqg-automate/internal/domain/wan"
+	internalDomain "xxqg-automate/internal/domain"
 	"xxqg-automate/internal/model"
 	"xxqg-automate/internal/util"
 )
@@ -112,9 +112,21 @@ func (s *userService) UpdateByUid(ctx context.Context, user *model.User) {
 		logger.Errorln(err)
 		return
 	}
-	util.GetClient().R().
-		SetHeader("token", constant.CommunicateHeaderKey).
-		SetBody(&internalDomain.ExpiredInfo{
-			Nick: user.Nick,
-		}).Post(config.GetString("communicate.baseUrl") + "/api/v1/loginSuccessNotify")
+	if config.GetString("communicate.baseUrl") != "" {
+		util.GetClient().R().
+			SetHeader("token", constant.CommunicateHeaderKey).
+			SetBody(&internalDomain.ExpiredInfo{
+				Nick: user.Nick,
+			}).Post(config.GetString("communicate.baseUrl") + "/api/v1/loginSuccessNotify")
+	}
+}
+
+func (s *userService) List(ctx context.Context) (users []*model.User, err error) {
+	err = zorm.Query(
+		ctx,
+		zorm.NewSelectFinder(model.UserTableName),
+		&users,
+		nil,
+	)
+	return
 }

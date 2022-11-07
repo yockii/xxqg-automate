@@ -14,21 +14,20 @@ builds:
       - -s -w -X main.VERSION={{.Version}}
     env:
       - CGO_ENABLED=0
-#    goos:
-#      - windows
-#    goarch:
-#      - amd64
-#      - 386
+    goos:
+      - windows
+      - darwin
+      - linux
 
   - id: "xxqg-server"
     main: ./cmd/wan/main.go
     binary: xxqg-server
     env:
       - CGO_ENABLED=0
-#    goos:
-#      - linux
-#      - windows
-#      - darwin
+    goos:
+      - linux
+      - windows
+      - darwin
 archives:
   - id: "xxqg-agent"
     builds:

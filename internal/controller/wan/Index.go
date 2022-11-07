@@ -16,7 +16,7 @@ import (
 
 	"xxqg-automate/internal/cache"
 	"xxqg-automate/internal/constant"
-	"xxqg-automate/internal/domain/wan"
+	"xxqg-automate/internal/domain"
 	job "xxqg-automate/internal/job/wan"
 	"xxqg-automate/internal/util"
 )
@@ -50,7 +50,7 @@ func InitRouter() {
 
 func handleSendDingRequest() {
 	server.Post("/api/v1/sendToDingtalkUser", func(ctx *fiber.Ctx) error {
-		req := new(wan.SendToDingUser)
+		req := new(domain.SendToDingUser)
 		if err := ctx.BodyParser(req); err != nil {
 			logger.Errorln(err)
 			return ctx.SendStatus(fiber.StatusBadRequest)
@@ -114,7 +114,7 @@ func handleStatusAsk() {
 	server.Get("/api/v1/status", checkToken, func(ctx *fiber.Ctx) error {
 		locker.Lock()
 		defer locker.Unlock()
-		return ctx.JSON(wan.StatusAsk{
+		return ctx.JSON(domain.StatusAsk{
 			NeedLink:       len(loginReq) > 0,
 			NeedStatistics: needStatistics.Load(),
 		})
@@ -130,7 +130,7 @@ func checkToken(ctx *fiber.Ctx) error {
 
 func handleStatisticsNotify() {
 	server.Post("/api/v1/statisticsNotify", checkToken, func(ctx *fiber.Ctx) error {
-		info := new(wan.StatisticsInfo)
+		info := new(domain.StatisticsInfo)
 		if err := ctx.BodyParser(info); err != nil {
 			logger.Errorln(err)
 			return ctx.SendStatus(fiber.StatusBadRequest)
@@ -157,7 +157,7 @@ func handleStatisticsNotify() {
 
 func handleLinkNotify() {
 	server.Post("/api/v1/newLink", checkToken, func(ctx *fiber.Ctx) error {
-		l := new(wan.LinkInfo)
+		l := new(domain.LinkInfo)
 		if err := ctx.BodyParser(l); err != nil {
 			logger.Errorln(err)
 			return ctx.SendStatus(fiber.StatusBadRequest)
@@ -180,7 +180,7 @@ func handleLinkNotify() {
 
 func handleFinishNotify() {
 	server.Post("/api/v1/finishNotify", checkToken, func(ctx *fiber.Ctx) error {
-		info := new(wan.FinishInfo)
+		info := new(domain.FinishInfo)
 		if err := ctx.BodyParser(info); err != nil {
 			logger.Errorln(err)
 			return ctx.SendStatus(fiber.StatusBadRequest)
@@ -192,7 +192,7 @@ func handleFinishNotify() {
 
 func handleExpiredNotify() {
 	server.Post("/api/v1/expiredNotify", checkToken, func(ctx *fiber.Ctx) error {
-		info := new(wan.ExpiredInfo)
+		info := new(domain.ExpiredInfo)
 		if err := ctx.BodyParser(info); err != nil {
 			logger.Errorln(err)
 			return ctx.SendStatus(fiber.StatusBadRequest)
@@ -205,7 +205,7 @@ func handleExpiredNotify() {
 
 func handleLoginSuccessNotify() {
 	server.Post("/api/v1/loginSuccessNotify", checkToken, func(ctx *fiber.Ctx) error {
-		info := new(wan.ExpiredInfo)
+		info := new(domain.ExpiredInfo)
 		if err := ctx.BodyParser(info); err != nil {
 			logger.Errorln(err)
 			return ctx.SendStatus(fiber.StatusBadRequest)

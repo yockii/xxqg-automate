@@ -13,7 +13,7 @@ import (
 	"github.com/yockii/qscore/pkg/task"
 
 	"xxqg-automate/internal/constant"
-	internalDomain "xxqg-automate/internal/domain/wan"
+	internalDomain "xxqg-automate/internal/domain"
 	"xxqg-automate/internal/model"
 	"xxqg-automate/internal/service"
 	"xxqg-automate/internal/study"
@@ -64,12 +64,14 @@ func InitAutoStudy() {
 						})
 						return nil, nil
 					})
-					if config.GetBool("xxqg.expireNotify") {
-						util.GetClient().R().
-							SetHeader("token", constant.CommunicateHeaderKey).
-							SetBody(&internalDomain.ExpiredInfo{
-								Nick: user.Nick,
-							}).Post(config.GetString("communicate.baseUrl") + "/api/v1/expiredNotify")
+					if config.GetString("communicate.baseUrl") != "" {
+						if config.GetBool("xxqg.expireNotify") {
+							util.GetClient().R().
+								SetHeader("token", constant.CommunicateHeaderKey).
+								SetBody(&internalDomain.ExpiredInfo{
+									Nick: user.Nick,
+								}).Post(config.GetString("communicate.baseUrl") + "/api/v1/expiredNotify")
+						}
 					}
 				}
 			}
@@ -136,11 +138,6 @@ func startStudy(user *model.User, jobs ...*model.Job) {
 				"last_study_time=?, last_score=?", domain.DateTime(time.Now().Add(randomDuration)), 0).
 				Append("WHERE id=?", user.Id)
 			return zorm.UpdateFinder(ctx, finder)
-			//return zorm.UpdateNotZeroValue(ctx, &model.User{
-			//	Id:            user.Id,
-			//	LastStudyTime: domain.DateTime(time.Now().Add(randomDuration * time.Second)),
-			//	LastScore:     0,
-			//})
 		})
 		if err != nil {
 			logger.Errorln(err)
@@ -179,10 +176,12 @@ func startStudy(user *model.User, jobs ...*model.Job) {
 	// 删除job
 	service.JobService.DeleteById(context.Background(), job.Id)
 
-	util.GetClient().R().
-		SetHeader("token", constant.CommunicateHeaderKey).
-		SetBody(&internalDomain.FinishInfo{
-			Nick:  user.Nick,
-			Score: score.TodayScore,
-		}).Post(config.GetString("communicate.baseUrl") + "/api/v1/finishNotify")
+	if config.GetString("communicate.baseUrl") != "" {
+		util.GetClient().R().
+			SetHeader("token", constant.CommunicateHeaderKey).
+			SetBody(&internalDomain.FinishInfo{
+				Nick:  user.Nick,
+				Score: score.TodayScore,
+			}).Post(config.GetString("communicate.baseUrl") + "/api/v1/finishNotify")
+	}
 }
