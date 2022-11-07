@@ -3,6 +3,16 @@
 
 package update
 
+import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
+	"crypto/sha256"
+	"errors"
+	"io"
+	"net/http"
+)
+
 func update(url string, sum []byte) error {
 	resp, err := http.Get(url)
 	if err != nil {
