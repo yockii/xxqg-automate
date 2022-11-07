@@ -33,10 +33,7 @@ archives:
   - id: "xxqg-agent"
     builds:
       - "xxqg-agent"
-    format_overrides:
-      - goos: windows
-        format: zip
-    name_template: `{{.Binary}}_{{.Version}}__{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}`
+    format: binary
     replacements:
       darwin: Darwin
       linux: Linux
@@ -46,10 +43,7 @@ archives:
   - id: "xxqg-server"
     builds:
       - "xxqg-server"
-    format_overrides:
-      - goos: windows
-        format: zip
-    name_template: `{{.Binary}}_{{.Version}}__{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}`
+    format: binary
     replacements:
       darwin: Darwin
       linux: Linux
