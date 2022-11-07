@@ -31,6 +31,11 @@ builds:
 #      - darwin
 archives:
   - id: "xxqg-agent"
+    builds:
+      - "xxqg-agent"
+    format_overrides:
+      - goos: windows
+        format: zip
     replacements:
       darwin: Darwin
       linux: Linux
@@ -38,6 +43,11 @@ archives:
       386: i386
       amd64: x86_64
   - id: "xxqg-server"
+    builds:
+      - "xxqg-server"
+    format_overrides:
+      - goos: windows
+        format: zip
     replacements:
       darwin: Darwin
       linux: Linux
