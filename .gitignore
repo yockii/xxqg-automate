@@ -1,7 +1,6 @@
 /conf/
 .idea/
 target/
-go.sum
 logs/
 tools/
 dist/
