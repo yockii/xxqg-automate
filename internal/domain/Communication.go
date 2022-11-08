@@ -1,8 +1,9 @@
 package domain
 
 type StatusAsk struct {
-	NeedLink       bool `json:"needLink,omitempty"`
-	NeedStatistics bool `json:"needStatistics,omitempty"`
+	NeedLink       bool              `json:"needLink,omitempty"`
+	NeedStatistics bool              `json:"needStatistics,omitempty"`
+	BindUsers      map[string]string `json:"bindUsers"`
 }
 
 type StatisticsInfo struct {
@@ -22,8 +23,9 @@ type FinishInfo struct {
 	Score int    `json:"score,omitempty"`
 }
 
-type ExpiredInfo struct {
-	Nick string `json:"nick,omitempty"`
+type NotifyInfo struct {
+	Nick    string `json:"nick,omitempty"`
+	Success bool   `json:"success"`
 }
 
 type SendToDingUser struct {

@@ -20,6 +20,7 @@ type User struct {
 	LastScore      int             `json:"lastScore" column:"last_score"`
 	Score          int             `json:"score" column:"score"`
 	Status         int             `json:"status,omitempty" column:"status"`
+	DingtalkId     string          `json:"dingtalkId,omitempty" column:"dingtalk_id"`
 	CreateTime     domain.DateTime `json:"createTime" column:"create_time"`
 }
 

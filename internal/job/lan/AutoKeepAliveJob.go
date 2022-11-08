@@ -64,7 +64,7 @@ func doKeepAlive(user *model.User) {
 			if config.GetBool("xxqg.expireNotify") {
 				util.GetClient().R().
 					SetHeader("token", constant.CommunicateHeaderKey).
-					SetBody(&internalDomain.ExpiredInfo{
+					SetBody(&internalDomain.NotifyInfo{
 						Nick: user.Nick,
 					}).Post(config.GetString("communicate.baseUrl") + "/api/v1/expiredNotify")
 			}

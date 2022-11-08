@@ -45,6 +45,7 @@ func InitRouter() {
 	handleStatisticsNotify()
 	handleExpiredNotify()
 	handleLoginSuccessNotify()
+	handleBindSuccessNotify()
 	handleSendDingRequest()
 }
 
@@ -69,6 +70,7 @@ func dingtalkSign(timestamp, secret string) string {
 func handleDingtalkCall() {
 	type dingtalkCallBody struct {
 		SenderStaffId string `json:"senderStaffId,omitempty"`
+		SenderNick    string `json:"senderNick,omitempty"`
 		Text          struct {
 			Content string `json:"content,omitempty"`
 		} `json:"text"`
@@ -104,7 +106,11 @@ func handleDingtalkCall() {
 		} else if strings.Contains(data.Text.Content, "统计") {
 			needStatistics.Store(true)
 		} else if strings.Contains(data.Text.Content, "绑定") {
-			bindUser[data.SenderStaffId] = strings.TrimSpace(strings.ReplaceAll(data.Text.Content, "绑定 ", ""))
+			nick := strings.TrimSpace(strings.ReplaceAll(data.Text.Content, "绑定 ", ""))
+			if nick == "" {
+				nick = data.SenderNick
+			}
+			bindUser[data.SenderStaffId] = nick
 		}
 		return ctx.SendStatus(fiber.StatusOK)
 	})
@@ -117,6 +123,7 @@ func handleStatusAsk() {
 		return ctx.JSON(domain.StatusAsk{
 			NeedLink:       len(loginReq) > 0,
 			NeedStatistics: needStatistics.Load(),
+			BindUsers:      bindUser,
 		})
 	})
 }
@@ -192,7 +199,7 @@ func handleFinishNotify() {
 
 func handleExpiredNotify() {
 	server.Post("/api/v1/expiredNotify", checkToken, func(ctx *fiber.Ctx) error {
-		info := new(domain.ExpiredInfo)
+		info := new(domain.NotifyInfo)
 		if err := ctx.BodyParser(info); err != nil {
 			logger.Errorln(err)
 			return ctx.SendStatus(fiber.StatusBadRequest)
@@ -205,13 +212,40 @@ func handleExpiredNotify() {
 
 func handleLoginSuccessNotify() {
 	server.Post("/api/v1/loginSuccessNotify", checkToken, func(ctx *fiber.Ctx) error {
-		info := new(domain.ExpiredInfo)
+		info := new(domain.NotifyInfo)
 		if err := ctx.BodyParser(info); err != nil {
 			logger.Errorln(err)
 			return ctx.SendStatus(fiber.StatusBadRequest)
 		}
 
 		sendToDingtalk("", fmt.Sprintf("%s登录成功", info.Nick), 1)
+		return ctx.SendStatus(fiber.StatusOK)
+	})
+}
+
+func handleBindSuccessNotify() {
+	server.Post("/api/v1/bindSuccessNotify", func(ctx *fiber.Ctx) error {
+		info := new(domain.NotifyInfo)
+		if err := ctx.BodyParser(info); err != nil {
+			logger.Errorln(err)
+			return ctx.SendStatus(fiber.StatusBadRequest)
+		}
+		successStr := "失败"
+		if info.Success {
+			successStr = "成功"
+		}
+
+		dingtalkUserId := ""
+
+		for dingtalkId, nick := range bindUser {
+			if nick == info.Nick {
+				dingtalkUserId = dingtalkId
+				delete(bindUser, dingtalkId)
+				break
+			}
+		}
+
+		sendToDingtalk(dingtalkUserId, fmt.Sprintf("%s绑定%s", info.Nick, successStr), 1)
 		return ctx.SendStatus(fiber.StatusOK)
 	})
 }

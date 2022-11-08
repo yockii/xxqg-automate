@@ -115,7 +115,7 @@ func (s *userService) UpdateByUid(ctx context.Context, user *model.User) {
 	if config.GetString("communicate.baseUrl") != "" {
 		util.GetClient().R().
 			SetHeader("token", constant.CommunicateHeaderKey).
-			SetBody(&internalDomain.ExpiredInfo{
+			SetBody(&internalDomain.NotifyInfo{
 				Nick: user.Nick,
 			}).Post(config.GetString("communicate.baseUrl") + "/api/v1/loginSuccessNotify")
 	}
@@ -129,4 +129,28 @@ func (s *userService) List(ctx context.Context) (users []*model.User, err error)
 		nil,
 	)
 	return
+}
+
+func (s *userService) BindUser(nick string, dingtalkId string) {
+	success := false
+	_, err := zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
+		count, err := zorm.UpdateFinder(
+			ctx,
+			zorm.NewUpdateFinder(model.UserTableName).Append("dingtalk_id=?", dingtalkId).Append("WHERE nick=?", nick),
+		)
+		success = count > 0
+		return success, err
+	})
+	if err != nil {
+		logger.Errorln(err)
+		return
+	}
+	if success && config.GetString("communicate.baseUrl") != "" {
+		util.GetClient().R().
+			SetHeader("token", constant.CommunicateHeaderKey).
+			SetBody(&internalDomain.NotifyInfo{
+				Nick:    nick,
+				Success: success,
+			}).Post(config.GetString("communicate.baseUrl") + "/api/v1/bindSuccessNotify")
+	}
 }

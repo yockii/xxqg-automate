@@ -55,4 +55,11 @@ func fetchServerInfo() {
 			SetHeader("token", constant.CommunicateHeaderKey).
 			SetBody(info).Post(config.GetString("communicate.baseUrl") + "/api/v1/statisticsNotify")
 	}
+
+	if len(result.BindUsers) > 0 {
+		// 绑定用户
+		for dingtalkId, nick := range result.BindUsers {
+			service.UserService.BindUser(nick, dingtalkId)
+		}
+	}
 }
