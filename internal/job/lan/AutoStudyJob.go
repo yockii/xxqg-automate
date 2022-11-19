@@ -132,6 +132,10 @@ func startStudy(user *model.User, jobs ...*model.Job) {
 		} else {
 			// 今天以前的日期，随机延长60 * 120秒 120分钟
 			randomDuration = time.Duration(rand.Intn(60*120)) * time.Second
+
+			if time.Now().Add(randomDuration).Day() != time.Now().Day() {
+				randomDuration = time.Duration(rand.Intn(60)) * time.Second
+			}
 		}
 		_, err := zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
 			finder := zorm.NewUpdateFinder(model.UserTableName).Append(
