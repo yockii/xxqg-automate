@@ -126,9 +126,14 @@ func handleStatusAsk() {
 		defer locker.Unlock()
 		needStudy := manualStudy
 		manualStudy = []string{}
+		loginDingId := ""
+		needLink := len(loginReq) > 0
+		if needLink {
+			loginDingId = loginReq[0]
+		}
 		return ctx.JSON(domain.StatusAsk{
-			NeedLink:       len(loginReq) > 0,
-			LinkDingId:     loginReq[0],
+			NeedLink:       needLink,
+			LinkDingId:     loginDingId,
 			NeedStatistics: needStatistics.Load(),
 			BindUsers:      bindUser,
 			StartStudy:     needStudy,
