@@ -104,7 +104,7 @@ func (s *userService) UpdateByUid(ctx context.Context, user *model.User) {
 			return zorm.Insert(ctx, user)
 		} else {
 			finder = zorm.NewUpdateFinder(model.UserTableName).
-				Append("token=?, login_time=?, status=1", user.Token, user.LoginTime).Append("WHERE uid=?", user.Uid)
+				Append("token=?, login_time=?, dingtalk_id=?, status=1", user.Token, user.LoginTime, user.DingtalkId).Append("WHERE uid=?", user.Uid)
 			return zorm.UpdateFinder(ctx, finder)
 		}
 	})
