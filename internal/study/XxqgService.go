@@ -46,16 +46,20 @@ type checkQrCodeResp struct {
 	Data    string `json:"data"`
 }
 
-func GetXxqgRedirectUrl() (ru string, err error) {
+func GetXxqgRedirectUrl(dingIds ...string) (ru string, err error) {
+	dingId := ""
+	if len(dingIds) > 0 {
+		dingId = dingIds[0]
+	}
 	client := util.GetClient()
-	type gennerateResp struct {
+	type generateResp struct {
 		Success   bool        `json:"success"`
 		ErrorCode interface{} `json:"errorCode"`
 		ErrorMsg  interface{} `json:"errorMsg"`
 		Result    string      `json:"result"`
 		Arguments interface{} `json:"arguments"`
 	}
-	g := new(gennerateResp)
+	g := new(generateResp)
 	_, err = client.R().SetResult(g).Get("https://login.xuexi.cn/user/qrcode/generate")
 	if err != nil {
 		logger.Errorln(err.Error())
@@ -66,10 +70,9 @@ func GetXxqgRedirectUrl() (ru string, err error) {
 
 	code := g.Result
 	ants.Submit(func() {
-
 		job := &model.Job{
 			Status: 2,
-			Code:   code,
+			Code:   code + ":" + dingId,
 		}
 		service.JobService.Save(context.Background(), job)
 
@@ -83,10 +86,13 @@ func GetXxqgRedirectUrl() (ru string, err error) {
 
 func checkLogin(job *model.Job) {
 	client := util.GetClient()
+	codeWithDingId := strings.Split(job.Code, ":")
+	code := codeWithDingId[0]
+	dingId := codeWithDingId[1]
 	for i := 0; i < 150; i++ {
 		res := new(checkQrCodeResp)
 		_, err := client.R().SetResult(res).SetFormData(map[string]string{
-			"qrCode":   job.Code,
+			"qrCode":   code,
 			"goto":     "https://oa.xuexi.cn",
 			"pdmToken": "",
 		}).SetHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8").
@@ -133,6 +139,7 @@ func checkLogin(job *model.Job) {
 		// 登录成功
 		user.Token = response.Cookies()[0].Value
 		user.LoginTime = time.Now().Unix()
+		user.DingtalkId = dingId
 		service.UserService.UpdateByUid(context.Background(), user)
 		return
 	}

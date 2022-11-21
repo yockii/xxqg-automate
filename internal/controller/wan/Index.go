@@ -29,6 +29,7 @@ import (
 var loginReq []string
 var needStatistics atomic.Bool
 var bindUser = make(map[string]string) // key=钉钉id value=名字
+var manualStudy []string               // 主动学习名单
 var locker sync.Mutex
 
 func InitRouter() {
@@ -111,6 +112,9 @@ func handleDingtalkCall() {
 				nick = data.SenderNick
 			}
 			bindUser[data.SenderStaffId] = nick
+		} else if strings.Contains(data.Text.Content, "学习") {
+			// 进行主动学习
+			manualStudy = append(manualStudy, data.SenderStaffId)
 		}
 		return ctx.SendStatus(fiber.StatusOK)
 	})
@@ -120,10 +124,14 @@ func handleStatusAsk() {
 	server.Get("/api/v1/status", checkToken, func(ctx *fiber.Ctx) error {
 		locker.Lock()
 		defer locker.Unlock()
+		needStudy := manualStudy
+		manualStudy = []string{}
 		return ctx.JSON(domain.StatusAsk{
 			NeedLink:       len(loginReq) > 0,
+			LinkDingId:     loginReq[0],
 			NeedStatistics: needStatistics.Load(),
 			BindUsers:      bindUser,
+			StartStudy:     needStudy,
 		})
 	})
 }

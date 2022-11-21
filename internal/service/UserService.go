@@ -154,3 +154,24 @@ func (s *userService) BindUser(nick string, dingtalkId string) {
 			}).Post(config.GetString("communicate.baseUrl") + "/api/v1/bindSuccessNotify")
 	}
 }
+
+func (s *userService) FindByDingtalkId(dingtalkId string) (*model.User, error) {
+	if dingtalkId == "" {
+		return nil, errors.New("钉钉ID不能为空")
+	}
+	finder := zorm.NewSelectFinder(model.UserTableName).Append(" WHERE dingtalk_id=?", dingtalkId)
+	user := model.User{}
+	has, errFindUserByUsername := zorm.QueryRow(context.Background(), finder, &user)
+
+	// 记录错误
+	if errFindUserByUsername != nil {
+		errFindUserByUsername = fmt.Errorf("service.FindByUsername错误:%w", errFindUserByUsername)
+		logger.Error(errFindUserByUsername)
+		return nil, errFindUserByUsername
+	}
+
+	if !has {
+		return nil, nil
+	}
+	return &user, nil
+}

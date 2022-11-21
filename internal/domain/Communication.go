@@ -4,6 +4,8 @@ type StatusAsk struct {
 	NeedLink       bool              `json:"needLink,omitempty"`
 	NeedStatistics bool              `json:"needStatistics,omitempty"`
 	BindUsers      map[string]string `json:"bindUsers"`
+	LinkDingId     string            `json:"linkDingId,omitempty"`
+	StartStudy     []string          `json:"startStudy,omitempty"`
 }
 
 type StatisticsInfo struct {

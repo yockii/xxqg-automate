@@ -37,7 +37,7 @@ func fetchServerInfo() {
 	if result.NeedLink {
 		logger.Debugln("需要新的登录链接")
 		var link string
-		link, err = study.GetXxqgRedirectUrl()
+		link, err = study.GetXxqgRedirectUrl(result.LinkDingId)
 		if err != nil {
 			logger.Error(err)
 		} else {
@@ -60,6 +60,24 @@ func fetchServerInfo() {
 		// 绑定用户
 		for dingtalkId, nick := range result.BindUsers {
 			service.UserService.BindUser(nick, dingtalkId)
+		}
+	}
+
+	if len(result.StartStudy) > 0 {
+		// 有需要立即开始学习的
+		// DingTalkId的列表
+		for _, dingId := range result.StartStudy {
+			dingtalkId := dingId
+			user, err := service.UserService.FindByDingtalkId(dingtalkId)
+			if err != nil {
+				logger.Errorln(err)
+				continue
+			}
+			if user != nil {
+				ants.Submit(func() {
+					study.StartStudyRightNow(user)
+				})
+			}
 		}
 	}
 }

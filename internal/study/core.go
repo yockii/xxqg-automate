@@ -1,12 +1,24 @@
 package study
 
 import (
+	"context"
+	"math/rand"
 	"os"
 	"runtime"
+	"time"
 
+	"gitee.com/chunanyong/zorm"
 	"github.com/playwright-community/playwright-go"
 	"github.com/prometheus/common/log"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yockii/qscore/pkg/config"
+	"github.com/yockii/qscore/pkg/domain"
+
+	"xxqg-automate/internal/constant"
+	domain2 "xxqg-automate/internal/domain"
+	"xxqg-automate/internal/model"
+	"xxqg-automate/internal/service"
+	"xxqg-automate/internal/util"
 )
 
 var Core *core
@@ -184,4 +196,139 @@ func (c *core) initNotWindows() {
 		return
 	}
 	c.browser = browser
+}
+
+func isToday(d time.Time) bool {
+	now := time.Now()
+	return d.Year() == now.Year() && d.Month() == now.Month() && d.Day() == now.Day()
+}
+
+var studyUserMap = make(map[string]*StudyingJob)
+
+type StudyingJob struct {
+	user        *model.User
+	job         *model.Job
+	timer       *time.Timer
+	startSignal chan bool
+}
+
+func (j *StudyingJob) startStudy(immediately ...bool) {
+	studyUserMap[j.user.Id] = j
+	defer func() {
+		// 执行完毕将自己从map中删除
+		delete(studyUserMap, j.user.Id)
+	}()
+	j.startSignal = make(chan bool, 1)
+	if time.Time(j.user.LastStudyTime).After(time.Now()) {
+		j.timer = time.NewTimer(time.Time(j.user.LastStudyTime).Sub(time.Now()))
+	} else {
+		var randomDuration = time.Second
+		if len(immediately) == 0 || !immediately[0] {
+			// 学习时间在当前时间之前
+			if isToday(time.Time(j.user.LastStudyTime)) {
+				// 今天的日期，随机延长120s 2分钟
+				randomDuration = time.Duration(rand.Intn(120)) * time.Second
+			} else {
+				// 今天以前的日期，随机延长60 * 120秒 120分钟
+				randomDuration = time.Duration(rand.Intn(60*120)) * time.Second
+
+				if time.Now().Add(randomDuration).Day() != time.Now().Day() {
+					randomDuration = time.Duration(rand.Intn(60)) * time.Second
+				}
+			}
+		}
+
+		_, err := zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
+			finder := zorm.NewUpdateFinder(model.UserTableName).Append(
+				"last_study_time=?, last_score=?", domain.DateTime(time.Now().Add(randomDuration)), 0).
+				Append("WHERE id=?", j.user.Id)
+			return zorm.UpdateFinder(ctx, finder)
+		})
+		if err != nil {
+			logger.Errorln(err)
+			return
+		}
+
+		// 随机休眠再开始学习
+		j.timer = time.NewTimer(randomDuration)
+	}
+	select {
+	case <-j.timer.C:
+	case <-j.startSignal:
+	}
+
+	logger.Infoln(j.user.Nick, "开始学习")
+	Core.Learn(j.user, constant.Article)
+	Core.Learn(j.user, constant.Video)
+	Core.Answer(j.user, 1)
+	Core.Answer(j.user, 2)
+	Core.Answer(j.user, 3)
+
+	time.Sleep(5 * time.Second)
+
+	score, _, _ := GetUserScore(TokenToCookies(j.user.Token))
+
+	_, err := zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
+		return zorm.UpdateNotZeroValue(ctx, &model.User{
+			Id:             j.user.Id,
+			LastCheckTime:  domain.DateTime(time.Now()),
+			LastFinishTime: domain.DateTime(time.Now()),
+			LastScore:      score.TodayScore,
+			Score:          score.TotalScore,
+		})
+	})
+	if err != nil {
+		logger.Errorln(err)
+		return
+	}
+
+	// 删除job
+	service.JobService.DeleteById(context.Background(), j.job.Id)
+
+	if config.GetString("communicate.baseUrl") != "" {
+		util.GetClient().R().
+			SetHeader("token", constant.CommunicateHeaderKey).
+			SetBody(&domain2.FinishInfo{
+				Nick:  j.user.Nick,
+				Score: score.TodayScore,
+			}).Post(config.GetString("communicate.baseUrl") + "/api/v1/finishNotify")
+	}
+}
+
+func StartStudy(user *model.User, jobs ...*model.Job) {
+	var job *model.Job
+	if len(jobs) == 0 {
+		job = &model.Job{
+			UserId: user.Id,
+			Status: 1,
+		}
+		service.JobService.DeleteByUserId(context.Background(), user.Id, 1)
+		service.JobService.Save(context.Background(), job)
+	} else {
+		job = jobs[0]
+	}
+	sj := &StudyingJob{
+		user: user,
+		job:  job,
+	}
+	sj.startStudy()
+}
+
+func StartStudyRightNow(user *model.User) {
+	if sj, has := studyUserMap[user.Id]; has {
+		close(sj.startSignal)
+		sj.timer.Stop()
+	}
+
+	job := &model.Job{
+		UserId: user.Id,
+		Status: 1,
+	}
+	service.JobService.DeleteByUserId(context.Background(), user.Id, 1)
+	service.JobService.Save(context.Background(), job)
+	sj := &StudyingJob{
+		user: user,
+		job:  job,
+	}
+	sj.startStudy(true)
 }

@@ -2,14 +2,12 @@ package lan
 
 import (
 	"context"
-	"math/rand"
 	"time"
 
 	"gitee.com/chunanyong/zorm"
 	"github.com/panjf2000/ants/v2"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yockii/qscore/pkg/config"
-	"github.com/yockii/qscore/pkg/domain"
 	"github.com/yockii/qscore/pkg/task"
 
 	"xxqg-automate/internal/constant"
@@ -53,7 +51,7 @@ func InitAutoStudy() {
 			if user.Token != "" {
 				if ok, _ := study.CheckUserCookie(study.TokenToCookies(user.Token)); ok {
 					ants.Submit(func() {
-						startStudy(user)
+						study.StartStudy(user)
 					})
 				} else {
 					logger.Warnln("用户登录信息已失效", user.Nick)
@@ -97,95 +95,8 @@ func loadJobs() {
 			continue
 		}
 		ants.Submit(func() {
-			startStudy(user, job)
+			study.StartStudy(user, job)
 		})
 		time.Sleep(time.Second)
-	}
-}
-
-func isToday(d time.Time) bool {
-	now := time.Now()
-	return d.Year() == now.Year() && d.Month() == now.Month() && d.Day() == now.Day()
-}
-
-func startStudy(user *model.User, jobs ...*model.Job) {
-	var job *model.Job
-	if len(jobs) == 0 {
-		job = &model.Job{
-			UserId: user.Id,
-			Status: 1,
-			Score:  0,
-		}
-		service.JobService.DeleteByUserId(context.Background(), user.Id, 1)
-		service.JobService.Save(context.Background(), job)
-	} else {
-		job = jobs[0]
-	}
-	if time.Time(user.LastStudyTime).After(time.Now()) {
-		time.Sleep(time.Time(user.LastStudyTime).Sub(time.Now()))
-	} else {
-		// 学习时间在当前时间之前
-		var randomDuration time.Duration
-		if isToday(time.Time(user.LastStudyTime)) {
-			// 今天的日期，随机延长120s 2分钟
-			randomDuration = time.Duration(rand.Intn(120)) * time.Second
-		} else {
-			// 今天以前的日期，随机延长60 * 120秒 120分钟
-			randomDuration = time.Duration(rand.Intn(60*120)) * time.Second
-
-			if time.Now().Add(randomDuration).Day() != time.Now().Day() {
-				randomDuration = time.Duration(rand.Intn(60)) * time.Second
-			}
-		}
-		_, err := zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
-			finder := zorm.NewUpdateFinder(model.UserTableName).Append(
-				"last_study_time=?, last_score=?", domain.DateTime(time.Now().Add(randomDuration)), 0).
-				Append("WHERE id=?", user.Id)
-			return zorm.UpdateFinder(ctx, finder)
-		})
-		if err != nil {
-			logger.Errorln(err)
-			return
-		}
-
-		// 随机休眠再开始学习
-		time.Sleep(randomDuration)
-	}
-
-	logger.Infoln(user.Nick, "开始学习")
-	study.Core.Learn(user, constant.Article)
-	study.Core.Learn(user, constant.Video)
-	study.Core.Answer(user, 1)
-	study.Core.Answer(user, 2)
-	study.Core.Answer(user, 3)
-
-	time.Sleep(5 * time.Second)
-
-	score, _, _ := study.GetUserScore(study.TokenToCookies(user.Token))
-
-	_, err := zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
-		return zorm.UpdateNotZeroValue(ctx, &model.User{
-			Id:             user.Id,
-			LastCheckTime:  domain.DateTime(time.Now()),
-			LastFinishTime: domain.DateTime(time.Now()),
-			LastScore:      score.TodayScore,
-			Score:          score.TotalScore,
-		})
-	})
-	if err != nil {
-		logger.Errorln(err)
-		return
-	}
-
-	// 删除job
-	service.JobService.DeleteById(context.Background(), job.Id)
-
-	if config.GetString("communicate.baseUrl") != "" {
-		util.GetClient().R().
-			SetHeader("token", constant.CommunicateHeaderKey).
-			SetBody(&internalDomain.FinishInfo{
-				Nick:  user.Nick,
-				Score: score.TodayScore,
-			}).Post(config.GetString("communicate.baseUrl") + "/api/v1/finishNotify")
 	}
 }
