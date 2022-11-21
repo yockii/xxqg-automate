@@ -72,7 +72,7 @@ func GetXxqgRedirectUrl(dingIds ...string) (ru string, err error) {
 	ants.Submit(func() {
 		job := &model.Job{
 			Status: 2,
-			Code:   code + ":" + dingId,
+			Code:   code + "|" + dingId,
 		}
 		service.JobService.Save(context.Background(), job)
 
@@ -86,7 +86,7 @@ func GetXxqgRedirectUrl(dingIds ...string) (ru string, err error) {
 
 func checkLogin(job *model.Job) {
 	client := util.GetClient()
-	codeWithDingId := strings.Split(job.Code, ":")
+	codeWithDingId := strings.Split(job.Code, "|")
 	code := codeWithDingId[0]
 	dingId := codeWithDingId[1]
 	for i := 0; i < 150; i++ {
