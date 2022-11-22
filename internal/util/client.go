@@ -21,7 +21,7 @@ func init() {
 }
 
 func GetClient() *req.Client {
-	return client
+	return client.EnableInsecureSkipVerify()
 }
 
 type myLog struct {

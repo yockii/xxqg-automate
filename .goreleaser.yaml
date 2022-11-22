@@ -70,3 +70,31 @@ changelog:
 # modelines, feel free to remove those if you don't want/use them:
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+dockers:
+  -
+    id: server
+    ids:
+      - "xxqg-server"
+    goos: linux
+    goarch: amd64
+    image_templates:
+      - "yockii/xxqg_server:latest"
+      - "yockii/xxqg_server:{{ .Tag }}"
+    skip_push: false
+    dockerfile: 'ServerDockerfile'
+    extra_files:
+      - conf/config.toml
+  -
+    id: agent
+    ids:
+      - "xxqg-agent"
+    goos: linux
+    goarch: amd64
+    image_templates:
+      - "yockii/xxqg_agent:latest"
+      - "yockii/xxqg_agent:{{ .Tag }}"
+    skip_push: false
+    dockerfile: 'AgentDockerfile'
+    extra_files:
+      - conf/config.toml
