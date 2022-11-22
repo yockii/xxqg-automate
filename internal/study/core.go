@@ -266,13 +266,24 @@ func (j *StudyingJob) startStudy(immediately ...bool) {
 
 	time.Sleep(5 * time.Second)
 
-	score, _, _ := GetUserScore(TokenToCookies(j.user.Token))
+	score, _, err := GetUserScore(TokenToCookies(j.user.Token))
+	if err != nil {
+		logger.Errorln(err)
+		return
+	}
+	now := domain.DateTime(time.Now())
+	lastCheckTime := now
 
-	_, err := zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
+	if score == nil {
+		score = &Score{}
+		lastCheckTime = domain.DateTime(time.Now().Add(-time.Hour))
+	}
+
+	_, err = zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
 		return zorm.UpdateNotZeroValue(ctx, &model.User{
 			Id:             j.user.Id,
-			LastCheckTime:  domain.DateTime(time.Now()),
-			LastFinishTime: domain.DateTime(time.Now()),
+			LastCheckTime:  lastCheckTime,
+			LastFinishTime: now,
 			LastScore:      score.TodayScore,
 			Score:          score.TotalScore,
 		})
