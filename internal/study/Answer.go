@@ -28,7 +28,7 @@ div.my-points-section > div.my-points-content > div:nth-child(5) > div.my-points
 )
 
 // Answer 答题 1-每日 2-每周 3-专项
-func (c *core) Answer(user *model.User, t int) {
+func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Errorln("答题发生异常恢复!", err)
@@ -42,7 +42,8 @@ func (c *core) Answer(user *model.User, t int) {
 	if !c.browser.IsConnected() {
 		return
 	}
-	score, _, err := GetUserScore(TokenToCookies(user.Token))
+	score, tokenFailed, err := GetUserScore(TokenToCookies(user.Token))
+
 	if err != nil || score == nil {
 		logger.Errorln("积分获取失败，停止答题", err)
 		return
@@ -160,10 +161,10 @@ func (c *core) Answer(user *model.User, t int) {
 	}
 
 	// 进入答题页面
-	c.startAnswer(user, &page, score, t)
+	return c.startAnswer(user, &page, score, t)
 }
 
-func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t int) {
+func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t int) (tokenFailed bool) {
 	page := *p
 	var title string
 	for i := 0; i < 30; i++ {
@@ -411,8 +412,13 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 				}
 			}
 		}
-		score, _, _ = GetUserScore(TokenToCookies(user.Token))
+
+		score, tokenFailed, _ = GetUserScore(TokenToCookies(user.Token))
+		if tokenFailed {
+			return
+		}
 	}
+	return
 }
 
 // RemoveRepByLoop 通过两重循环过滤重复元素

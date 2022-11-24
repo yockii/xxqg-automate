@@ -104,15 +104,18 @@ func handleDingtalkCall() {
 			locker.Lock()
 			defer locker.Unlock()
 			loginReq = append(loginReq, data.SenderStaffId)
-		} else if strings.Contains(data.Text.Content, "统计") {
+		}
+		if strings.Contains(data.Text.Content, "统计") {
 			needStatistics.Store(true)
-		} else if strings.Contains(data.Text.Content, "绑定") {
+		}
+		if strings.Contains(data.Text.Content, "绑定") {
 			nick := strings.TrimSpace(strings.ReplaceAll(data.Text.Content, "绑定 ", ""))
 			if nick == "" {
 				nick = data.SenderNick
 			}
 			bindUser[data.SenderStaffId] = nick
-		} else if strings.Contains(data.Text.Content, "学习") {
+		}
+		if strings.Contains(data.Text.Content, "学习") {
 			// 进行主动学习
 			manualStudy = append(manualStudy, data.SenderStaffId)
 		}

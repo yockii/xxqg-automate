@@ -15,7 +15,7 @@ import (
 	"github.com/yockii/qscore/pkg/domain"
 
 	"xxqg-automate/internal/constant"
-	domain2 "xxqg-automate/internal/domain"
+	internalDomain "xxqg-automate/internal/domain"
 	"xxqg-automate/internal/model"
 	"xxqg-automate/internal/service"
 	"xxqg-automate/internal/util"
@@ -258,17 +258,41 @@ func (j *StudyingJob) startStudy(immediately ...bool) {
 	}
 
 	logger.Infoln(j.user.Nick, "开始学习")
-	Core.Learn(j.user, constant.Article)
-	Core.Learn(j.user, constant.Video)
-	Core.Answer(j.user, 1)
-	Core.Answer(j.user, 2)
-	Core.Answer(j.user, 3)
+	tokenFailed := Core.Learn(j.user, constant.Article)
+	if tokenFailed {
+		dealFailedToken(j.user)
+		return
+	}
+	tokenFailed = Core.Learn(j.user, constant.Video)
+	if tokenFailed {
+		dealFailedToken(j.user)
+		return
+	}
+	tokenFailed = Core.Answer(j.user, 1)
+	if tokenFailed {
+		dealFailedToken(j.user)
+		return
+	}
+	tokenFailed = Core.Answer(j.user, 2)
+	if tokenFailed {
+		dealFailedToken(j.user)
+		return
+	}
+	tokenFailed = Core.Answer(j.user, 3)
+	if tokenFailed {
+		dealFailedToken(j.user)
+		return
+	}
 
 	time.Sleep(5 * time.Second)
 
-	score, _, err := GetUserScore(TokenToCookies(j.user.Token))
+	score, tokenFailed, err := GetUserScore(TokenToCookies(j.user.Token))
 	if err != nil {
 		logger.Errorln(err)
+		return
+	}
+	if tokenFailed {
+		dealFailedToken(j.user)
 		return
 	}
 	now := domain.DateTime(time.Now())
@@ -299,11 +323,35 @@ func (j *StudyingJob) startStudy(immediately ...bool) {
 	if config.GetString("communicate.baseUrl") != "" {
 		util.GetClient().R().
 			SetHeader("token", constant.CommunicateHeaderKey).
-			SetBody(&domain2.FinishInfo{
+			SetBody(&internalDomain.FinishInfo{
 				Nick:  j.user.Nick,
 				Score: score.TodayScore,
 			}).Post(config.GetString("communicate.baseUrl") + "/api/v1/finishNotify")
 	}
+}
+
+func dealFailedToken(user *model.User) {
+	zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
+		_, err := zorm.UpdateNotZeroValue(ctx, &model.User{
+			Id:            user.Id,
+			LastCheckTime: domain.DateTime(time.Now()),
+			Status:        -1,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return zorm.Delete(ctx, &model.Job{UserId: user.Id, Status: 1})
+	})
+	if config.GetString("communicate.baseUrl") != "" {
+		if config.GetBool("xxqg.expireNotify") {
+			util.GetClient().R().
+				SetHeader("token", constant.CommunicateHeaderKey).
+				SetBody(&internalDomain.NotifyInfo{
+					Nick: user.Nick,
+				}).Post(config.GetString("communicate.baseUrl") + "/api/v1/expiredNotify")
+		}
+	}
+	return
 }
 
 func StartStudy(user *model.User, jobs ...*model.Job) {

@@ -13,7 +13,7 @@ import (
 	"xxqg-automate/internal/model"
 )
 
-func (c *core) startLearnVideo(user *model.User, p *playwright.Page, score *Score) {
+func (c *core) startLearnVideo(user *model.User, p *playwright.Page, score *Score) (tokenFailed bool) {
 	page := *p
 	for i := 0; i < 20; i++ {
 		links, _ := getLinks(constant.Video)
@@ -51,13 +51,15 @@ func (c *core) startLearnVideo(user *model.User, p *playwright.Page, score *Scor
 				}
 				time.Sleep(1 * time.Second)
 			}
-			score, _, _ = GetUserScore(TokenToCookies(user.Token))
-
+			score, tokenFailed, _ = GetUserScore(TokenToCookies(user.Token))
+			if tokenFailed {
+				return
+			}
 			if score.Content[constant.Video] != nil && score.Content[constant.Video].CurrentScore >= score.Content[constant.Video].MaxScore && score.Content["video_time"] != nil && score.Content["video_time"].CurrentScore >= score.Content["video_time"].MaxScore {
 				logger.Debugln("检测到本次视频学习分数已满，退出学习")
 				break
 			}
 		}
-
 	}
+	return
 }

@@ -38,7 +38,7 @@ func GetUserScore(cookies []*http.Cookie) (score *Score, tokenFailed bool, err e
 	client := util.GetClient()
 	response, err := client.R().SetCookies(cookies...).SetHeaders(header).Get(constant.XxqgUrlTotalScore)
 	if err != nil {
-		logger.Errorln("获取用户总分错误" + err.Error())
+		logger.Errorln("获取用户总分错误"+err.Error(), string(response.Bytes()))
 		return nil, false, err
 	}
 	resp = response.Bytes()
@@ -47,7 +47,7 @@ func GetUserScore(cookies []*http.Cookie) (score *Score, tokenFailed bool, err e
 
 	response, err = client.R().SetCookies(cookies...).SetHeaders(header).Get(constant.XxqgUrlTodayTotalScore)
 	if err != nil {
-		log.Errorln("获取用户总分错误" + err.Error())
+		log.Errorln("获取用户总分错误"+err.Error(), string(response.Bytes()))
 		return nil, false, err
 	}
 	resp = response.Bytes()
@@ -55,7 +55,7 @@ func GetUserScore(cookies []*http.Cookie) (score *Score, tokenFailed bool, err e
 
 	response, err = client.R().SetCookies(cookies...).SetHeaders(header).Get(constant.XxqgUrlRateScore)
 	if err != nil {
-		log.Errorln("获取用户总分错误" + err.Error())
+		log.Errorln("获取用户总分错误"+err.Error(), string(response.Bytes()))
 		return nil, false, err
 	}
 	resp = response.Bytes()

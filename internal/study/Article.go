@@ -12,12 +12,12 @@ import (
 	"xxqg-automate/internal/model"
 )
 
-func (c *core) Learn(user *model.User, learnModule string) {
+func (c *core) Learn(user *model.User, learnModule string) (tokenFailed bool) {
 	if !c.browser.IsConnected() {
 		return
 	}
 
-	score, _, err := GetUserScore(TokenToCookies(user.Token))
+	score, tokenFailed, err := GetUserScore(TokenToCookies(user.Token))
 	if err != nil {
 		logger.Errorln(err)
 		return
@@ -78,9 +78,10 @@ func (c *core) Learn(user *model.User, learnModule string) {
 	case constant.Video:
 		c.startLearnVideo(user, &page, score)
 	}
+	return
 }
 
-func (c *core) startLearnArticle(user *model.User, p *playwright.Page, score *Score) {
+func (c *core) startLearnArticle(user *model.User, p *playwright.Page, score *Score) (tokenFailed bool) {
 	page := *p
 	for i := 0; i < 20; i++ {
 		links, _ := getLinks(constant.Article)
@@ -113,10 +114,14 @@ func (c *core) startLearnArticle(user *model.User, p *playwright.Page, score *Sc
 			}
 			time.Sleep(1 * time.Second)
 		}
-		score, _, _ = GetUserScore(TokenToCookies(user.Token))
+		score, tokenFailed, _ = GetUserScore(TokenToCookies(user.Token))
+		if tokenFailed {
+			return
+		}
 		if articleScore, ok := score.Content[constant.Article]; !ok || articleScore.CurrentScore >= articleScore.MaxScore {
 			logger.Debugln("检测到文章学习已完成，结束文章学习")
 			return
 		}
 	}
+	return
 }

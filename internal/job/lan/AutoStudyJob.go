@@ -39,7 +39,10 @@ func InitAutoStudy() {
 		lastTime = time.Now().Add(-1 * time.Hour)
 		var notFinished []*model.User
 		if err := zorm.Query(context.Background(),
-			zorm.NewSelectFinder(model.UserTableName).Append("WHERE last_study_time>? and last_study_time<? and (last_finish_time is null or last_finish_time<last_study_time) and status>0", time.Now().Format("2006-01-02"), lastTime),
+			zorm.NewSelectFinder(model.UserTableName).Append(
+				"WHERE last_study_time>? and last_study_time<? and (last_finish_time is null or last_finish_time<last_study_time or last_score=0) and status>0",
+				time.Now().Format("2006-01-02"),
+				lastTime),
 			&notFinished,
 			nil,
 		); err != nil {

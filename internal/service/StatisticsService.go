@@ -13,7 +13,7 @@ import (
 
 func GetStatisticsInfo() *domain.StatisticsInfo {
 	var finished []*model.User
-	finder := zorm.NewSelectFinder(model.UserTableName).Append("WHERE last_finish_time>?", time.Now().Format("2006-01-02"))
+	finder := zorm.NewSelectFinder(model.UserTableName).Append("WHERE last_finish_time>? and last_score>0", time.Now().Format("2006-01-02"))
 	err := zorm.Query(context.Background(), finder, &finished, nil)
 	if err != nil {
 		logrus.Error(err)
