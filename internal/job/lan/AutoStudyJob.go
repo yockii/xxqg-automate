@@ -8,6 +8,7 @@ import (
 	"github.com/panjf2000/ants/v2"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yockii/qscore/pkg/config"
+	"github.com/yockii/qscore/pkg/domain"
 	"github.com/yockii/qscore/pkg/task"
 
 	"xxqg-automate/internal/constant"
@@ -56,11 +57,15 @@ func InitAutoStudy() {
 				} else {
 					logger.Warnln("用户登录信息已失效", user.Nick)
 					zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
-						zorm.UpdateNotZeroValue(ctx, &model.User{
-							Id:     user.Id,
-							Status: -1,
+						_, err := zorm.UpdateNotZeroValue(ctx, &model.User{
+							Id:            user.Id,
+							LastCheckTime: domain.DateTime(time.Now()),
+							Status:        -1,
 						})
-						return nil, nil
+						if err != nil {
+							return nil, err
+						}
+						return zorm.Delete(ctx, &model.Job{UserId: user.Id, Status: 1})
 					})
 					if config.GetString("communicate.baseUrl") != "" {
 						if config.GetBool("xxqg.expireNotify") {

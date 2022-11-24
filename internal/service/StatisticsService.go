@@ -20,7 +20,9 @@ func GetStatisticsInfo() *domain.StatisticsInfo {
 	}
 
 	var studying []*model.User
-	finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE id in (SELECT user_id FROM " + model.JobTableName + ")")
+	finder = zorm.NewSelectFinder(model.UserTableName).
+		Append("WHERE id in (SELECT user_id FROM "+model.JobTableName+") and status=1 and last_study_time>? and last_study_time<?",
+			time.Now().Format("2006-01-02"), time.Now())
 	err = zorm.Query(context.Background(), finder, &studying, nil)
 	if err != nil {
 		logrus.Error(err)
@@ -34,7 +36,7 @@ func GetStatisticsInfo() *domain.StatisticsInfo {
 	}
 
 	var waiting []*model.User
-	finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE status>0 and last_study_time<?", time.Now().Format("2006-01-02"))
+	finder = zorm.NewSelectFinder(model.UserTableName).Append("WHERE status>0 and (last_study_time<? or last_study_time>?)", time.Now().Format("2006-01-02"), time.Now())
 	err = zorm.Query(context.Background(), finder, &waiting, nil)
 	if err != nil {
 		logrus.Error(err)
