@@ -534,8 +534,8 @@ github.com/valyala/tcplisten v1.0.0 h1:rBHj/Xf+E1tRGZyWIWwJDiRY0zc1Js+CV5DqwacVS
 github.com/valyala/tcplisten v1.0.0/go.mod h1:T0xQ8SeCZGxckz9qRXTfG43PvQ/mcWh7FwZEA7Ioqkc=
 github.com/viant/assertly v0.4.8/go.mod h1:aGifi++jvCrUaklKEKT0BU95igDNaqkvz+49uaYMPRU=
 github.com/viant/toolbox v0.24.0/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
-github.com/yockii/qscore v0.0.0-20221107040215-7ca57c896227 h1:NxjO05u/8GUxv1TkB4yGEXlHG8Z9rT9eQ2XDiVyJv68=
-github.com/yockii/qscore v0.0.0-20221107040215-7ca57c896227/go.mod h1:d0mXHynSQwLBCP8wD0gBW9bFCKu5uZnfd3gvUjDM0iE=
+github.com/yockii/qscore v0.0.0-20221201054601-20f54d279ce0 h1:BYmx8GsmA7tDgLMuSvAsUYOqwb7fy/bB9wBZdWgW/ms=
+github.com/yockii/qscore v0.0.0-20221201054601-20f54d279ce0/go.mod h1:d0mXHynSQwLBCP8wD0gBW9bFCKu5uZnfd3gvUjDM0iE=
 github.com/yosssi/ace v0.0.5/go.mod h1:ALfIzm2vT7t5ZE7uoIZqF3TQ7SAOyupFZnkrF5id+K0=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

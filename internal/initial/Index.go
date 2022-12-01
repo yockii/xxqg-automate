@@ -2,8 +2,6 @@ package initial
 
 import (
 	"time"
-
-	_ "github.com/yockii/qscore/pkg/database"
 )
 
 func init() {

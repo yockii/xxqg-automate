@@ -14,7 +14,7 @@ require (
 	github.com/prometheus/common v0.7.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/tidwall/gjson v1.14.3
-	github.com/yockii/qscore v0.0.0-20221107040215-7ca57c896227
+	github.com/yockii/qscore v0.0.0-20221201054601-20f54d279ce0
 )
 
 require (
