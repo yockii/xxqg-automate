@@ -1,3 +1,4 @@
 FROM mcr.microsoft.com/playwright:v1.29.0-alpha-nov-22-2022-jammy
 ENTRYPOINT ["/xxqg-agent"]
 COPY xxqg-agent /
+COPY conf/config.toml /conf/config.toml
