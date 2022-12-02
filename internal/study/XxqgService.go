@@ -18,11 +18,7 @@ import (
 	"xxqg-automate/internal/util"
 )
 
-func init() {
-	loadLoginJobs()
-}
-
-func loadLoginJobs() {
+func LoadLoginJobs() {
 	jobs, err := service.JobService.FindList(context.Background(),
 		zorm.NewSelectFinder(model.JobTableName).Append("WHERE status=2"),
 		nil,

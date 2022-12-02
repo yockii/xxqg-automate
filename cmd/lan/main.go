@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
+	"os/exec"
 
 	"gitee.com/chunanyong/zorm"
 	"github.com/panjf2000/ants/v2"
@@ -25,6 +27,7 @@ var VERSION = ""
 
 var (
 	baseUrl string
+	daemon  bool
 )
 
 func init() {
@@ -36,6 +39,7 @@ func init() {
 	config.DefaultInstance.SetDefault("xxqg.expireNotify", false)
 
 	flag.StringVar(&baseUrl, "baseUrl", "", "服务端url")
+	flag.BoolVar(&daemon, "daemon", false, "以守护进程方式启动")
 	flag.Parse()
 
 	if baseUrl != "" {
@@ -50,14 +54,19 @@ func init() {
 }
 
 func main() {
+	if daemon {
+		runDaemon(os.Args)
+		return
+	}
+
 	defer ants.Release()
 	logger.Infoln("当前应用版本: " + VERSION)
 	logger.Infoln("开始检测环境.....")
 
 	study.Init()
 	defer study.Quit()
-
 	database.InitSysDb()
+	study.LoadLoginJobs()
 
 	// 检查数据库文件是否存在
 	if config.GetString("database.type") == "sqlite" {
@@ -88,6 +97,35 @@ func main() {
 	defer task.Stop()
 
 	startWeb()
+}
+
+// 以守护进程方式启动
+func runDaemon(args []string) {
+	fmt.Printf("pid:%d ppid: %d, arg: %s \n", os.Getpid(), os.Getppid(), os.Args)
+	// 去除--daemon参数，启动主程序
+	for i := 0; i < len(args); {
+		if args[i] == "--daemon" && i != len(args)-1 {
+			args = append(args[:i], args[i+1:]...)
+		} else if args[i] == "--daemon" && i == len(args)-1 {
+			args = args[:i]
+		} else {
+			i++
+		}
+	}
+	// 启动子进程
+	for {
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err := cmd.Start()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "启动失败, Error: %s \n", err)
+			return
+		}
+		fmt.Printf("守护进程模式启动学习端, pid:%d ppid: %d, arg: %s \n", cmd.Process.Pid, os.Getpid(), args)
+		cmd.Wait()
+	}
 }
 
 func createTables() {
