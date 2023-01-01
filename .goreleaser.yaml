@@ -11,7 +11,7 @@ builds:
     main: ./cmd/lan/main.go
     binary: xxqg-agent
     ldflags:
-      - -s -w -X main.VERSION={{.Version}}
+      - -s -w -X main.VERSION=v{{.Version}}
     env:
       - CGO_ENABLED=0
     goos:

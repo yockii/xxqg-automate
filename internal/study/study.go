@@ -79,25 +79,21 @@ func GetUserScore(cookies []*http.Cookie) (score *Score, tokenFailed bool, err e
 		CurrentScore: int(taskProgress[1].Get("currentScore").Int()),
 		MaxScore:     int(taskProgress[1].Get("dayMaxScore").Int()),
 	}
-	m["weekly"] = &Data{
+	m["video_time"] = &Data{
 		CurrentScore: int(taskProgress[2].Get("currentScore").Int()),
 		MaxScore:     int(taskProgress[2].Get("dayMaxScore").Int()),
 	}
-	m["video_time"] = &Data{
+	m["login"] = &Data{
 		CurrentScore: int(taskProgress[3].Get("currentScore").Int()),
 		MaxScore:     int(taskProgress[3].Get("dayMaxScore").Int()),
 	}
-	m["login"] = &Data{
+	m["special"] = &Data{
 		CurrentScore: int(taskProgress[4].Get("currentScore").Int()),
 		MaxScore:     int(taskProgress[4].Get("dayMaxScore").Int()),
 	}
-	m["special"] = &Data{
+	m["daily"] = &Data{
 		CurrentScore: int(taskProgress[5].Get("currentScore").Int()),
 		MaxScore:     int(taskProgress[5].Get("dayMaxScore").Int()),
-	}
-	m["daily"] = &Data{
-		CurrentScore: int(taskProgress[6].Get("currentScore").Int()),
-		MaxScore:     int(taskProgress[6].Get("dayMaxScore").Int()),
 	}
 
 	score.Content = m
