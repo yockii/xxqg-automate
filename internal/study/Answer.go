@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -49,8 +50,10 @@ func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 		return
 	}
 	bc, err := c.browser.NewContext()
-	if err != nil {
+	if err != nil || bc == nil {
 		logger.Errorln("创建浏览实例出错!", err)
+		//TODO 退出系统重启
+		os.Exit(1)
 		return
 	}
 	// 添加一个script,防止被检测
@@ -67,8 +70,10 @@ func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 	}()
 
 	page, err := bc.NewPage()
-	if err != nil {
+	if err != nil || page == nil {
 		logger.Errorln("创建页面失败", err)
+		//TODO 退出系统重启
+		os.Exit(1)
 		return
 	}
 	defer func() {
@@ -107,29 +112,29 @@ func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 	case 2:
 		// 每周答题
 		{
-			if score.Content["weekly"].CurrentScore >= score.Content["weekly"].MaxScore {
-				logger.Debugln("检测到每周答题已完成，退出每周答题")
-				return
-			}
-			var id int
-			id, err = getWeekId(TokenToCookies(user.Token))
-			if err != nil {
-				logger.Errorln("获取要答的每周答题出错", err)
-				return
-			}
-			if id == 0 {
-				logger.Warnln("未获取到每周答题id，退出答题")
-				return
-			}
-			_, err = page.Goto(fmt.Sprintf(constant.XxqgUrlWeekAnswerPage, id), playwright.PageGotoOptions{
-				Referer:   playwright.String(constant.XxqgUrlMyPoints),
-				Timeout:   playwright.Float(10000),
-				WaitUntil: playwright.WaitUntilStateDomcontentloaded,
-			})
-			if err != nil {
-				logger.Errorln("跳转每周答题出错", err)
-				return
-			}
+			//if score.Content["weekly"].CurrentScore >= score.Content["weekly"].MaxScore {
+			//	logger.Debugln("检测到每周答题已完成，退出每周答题")
+			//	return
+			//}
+			//var id int
+			//id, err = getWeekId(TokenToCookies(user.Token))
+			//if err != nil {
+			//	logger.Errorln("获取要答的每周答题出错", err)
+			//	return
+			//}
+			//if id == 0 {
+			//	logger.Warnln("未获取到每周答题id，退出答题")
+			//	return
+			//}
+			//_, err = page.Goto(fmt.Sprintf(constant.XxqgUrlWeekAnswerPage, id), playwright.PageGotoOptions{
+			//	Referer:   playwright.String(constant.XxqgUrlMyPoints),
+			//	Timeout:   playwright.Float(10000),
+			//	WaitUntil: playwright.WaitUntilStateDomcontentloaded,
+			//})
+			//if err != nil {
+			//	logger.Errorln("跳转每周答题出错", err)
+			//	return
+			//}
 		}
 	case 3:
 		// 专项

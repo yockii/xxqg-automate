@@ -273,11 +273,12 @@ func (j *StudyingJob) startStudy(immediately ...bool) {
 		dealFailedToken(j.user)
 		return
 	}
-	tokenFailed = Core.Answer(j.user, 2)
-	if tokenFailed {
-		dealFailedToken(j.user)
-		return
-	}
+	// 每周答题
+	//tokenFailed = Core.Answer(j.user, 2)
+	//if tokenFailed {
+	//	dealFailedToken(j.user)
+	//	return
+	//}
 	tokenFailed = Core.Answer(j.user, 3)
 	if tokenFailed {
 		dealFailedToken(j.user)
