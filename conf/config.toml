@@ -1,0 +1,17 @@
+
+[communicate]
+  baseurl = "aaaaaa"
+
+[database]
+  address = "./conf/data.db"
+  type = "sqlite"
+
+[logger]
+  level = "debug"
+
+[server]
+  port = 8080
+
+[xxqg]
+  expirenotify = false
+  schema = "https://scintillating-axolotl-8c8432.netlify.app/?"
