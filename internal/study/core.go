@@ -259,7 +259,7 @@ func (j *StudyingJob) startStudy(immediately ...bool) {
 
 	// 休眠完毕，可能有些token已经失效，重新获取用户信息
 	newUserInfo := new(model.User)
-	if ok, err := zorm.QueryRow(context.Background(), zorm.NewSelectFinder(model.UserTableName).Append("id=?", j.user.Id), newUserInfo); err != nil {
+	if ok, err := zorm.QueryRow(context.Background(), zorm.NewSelectFinder(model.UserTableName).Append("WHERE id=?", j.user.Id), newUserInfo); err != nil {
 		logger.Errorln(err)
 	} else if ok {
 		j.user = newUserInfo
