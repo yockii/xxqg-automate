@@ -293,15 +293,26 @@ func (j *StudyingJob) startStudy(immediately ...bool) {
 		return
 	}
 
-	time.Sleep(5 * time.Second)
+	var score *Score
+	var err error
 
-	score, tokenFailed, err := GetUserScore(TokenToCookies(j.user.Token))
+	for i := 0; i < 5; i++ {
+		time.Sleep(15 * time.Second)
+		score, tokenFailed, err = GetUserScore(TokenToCookies(j.user.Token))
+		if err != nil {
+			logger.Errorln(err)
+			continue
+		}
+		if tokenFailed {
+			dealFailedToken(j.user)
+			return
+		}
+		if score != nil && score.TodayScore > 0 {
+			break
+		}
+	}
 	if err != nil {
 		logger.Errorln(err)
-		return
-	}
-	if tokenFailed {
-		dealFailedToken(j.user)
 		return
 	}
 	now := domain.DateTime(time.Now())
