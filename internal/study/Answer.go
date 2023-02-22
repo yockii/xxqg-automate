@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -28,6 +29,124 @@ const (
 div.my-points-section > div.my-points-content > div:nth-child(5) > div.my-points-card-footer > div.buttonbox > div`
 )
 
+// Score 获取积分
+func (c *core) Score(user *model.User) (score *Score) {
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Errorln("获取积分异常!", err)
+		}
+	}()
+
+	if !c.browser.IsConnected() {
+		return
+	}
+	bc, err := c.browser.NewContext()
+	if err != nil || bc == nil {
+		logger.Errorln("创建浏览实例出错!", err)
+		//TODO 退出系统重启
+		os.Exit(1)
+		return
+	}
+	// 添加一个script,防止被检测
+	err = bc.AddInitScript(playwright.BrowserContextAddInitScriptOptions{
+		Script: playwright.String("Object.defineProperties(navigator, {webdriver:{get:()=>undefined}});")})
+	if err != nil {
+		logger.Errorln("附加脚本出错!", err)
+		return
+	}
+	defer func() {
+		if err = bc.Close(); err != nil {
+			logger.Errorln("关闭浏览实例出错", err)
+		}
+	}()
+	page, err := bc.NewPage()
+	if err != nil || page == nil {
+		logger.Errorln("创建页面失败", err)
+		//TODO 退出系统重启
+		os.Exit(1)
+		return
+	}
+	defer func() {
+		_ = page.Close()
+	}()
+	err = bc.AddCookies(ToBrowserCookies(user.Token)...)
+	if err != nil {
+		logger.Errorln("添加cookies失败", err)
+		return
+	}
+	// 跳转到积分页面
+	_, err = page.Goto(constant.XxqgUrlMyPoints, playwright.PageGotoOptions{
+		Referer:   playwright.String(constant.XxqgUrlMyPoints),
+		Timeout:   playwright.Float(10000),
+		WaitUntil: playwright.WaitUntilStateDomcontentloaded,
+	})
+	if err != nil {
+		logger.Errorln("跳转页面失败" + err.Error())
+		return
+	}
+	// 查找总积分
+	total := c.getScore(page, "#app > div > div.layout-body > div > div:nth-child(2) > div.my-points-block > span.my-points-points.my-points-red")
+	today := c.getScore(page, "#app > div > div.layout-body > div > div:nth-child(2) > div.my-points-block > span:nth-child(3)")
+	// article
+	login := c.getScore(page, "#app > div > div.layout-body > div > div.my-points-section > div.my-points-content > div:nth-child(1) > div.my-points-card-footer > div.my-points-card-progress > div.my-points-card-text")
+	article := c.getScore(page, "#app > div > div.layout-body > div > div.my-points-section > div.my-points-content > div:nth-child(2) > div.my-points-card-footer > div.my-points-card-progress > div.my-points-card-text")
+	video := c.getScore(page, "#app > div > div.layout-body > div > div.my-points-section > div.my-points-content > div:nth-child(3) > div.my-points-card-footer > div.my-points-card-progress > div.my-points-card-text")
+	videoTime := c.getScore(page, "#app > div > div.layout-body > div > div.my-points-section > div.my-points-content > div:nth-child(4) > div.my-points-card-footer > div.my-points-card-progress > div.my-points-card-text")
+	special := c.getScore(page, "#app > div > div.layout-body > div > div.my-points-section > div.my-points-content > div:nth-child(6) > div.my-points-card-footer > div.my-points-card-progress > div.my-points-card-text")
+	daily := c.getScore(page, "#app > div > div.layout-body > div > div.my-points-section > div.my-points-content > div:nth-child(5) > div.my-points-card-footer > div.my-points-card-progress > div.my-points-card-text")
+	score = &Score{
+		TotalScore: total,
+		TodayScore: today,
+		Content: map[string]*Data{
+			"login": {
+				CurrentScore: login,
+				MaxScore:     1,
+			},
+			constant.Article: {
+				CurrentScore: article,
+				MaxScore:     12,
+			},
+			constant.Video: {
+				CurrentScore: video,
+				MaxScore:     6,
+			},
+			"video_time": {
+				CurrentScore: videoTime,
+				MaxScore:     6,
+			},
+			"special": {
+				CurrentScore: special,
+				MaxScore:     10,
+			},
+			"daily": {
+				CurrentScore: daily,
+				MaxScore:     5,
+			},
+		},
+	}
+	return
+}
+
+func (c *core) getScore(page playwright.Page, selector string) (score int) {
+	div, err := page.QuerySelector(selector)
+	if err != nil {
+		logger.Debugln("获取积分失败", err.Error())
+		return
+	}
+	str, err := div.InnerText()
+	if err != nil {
+		logger.Debugln("获取积分失败", err.Error())
+		return
+	}
+	if strings.Contains(str, "分") {
+		str = str[:strings.Index(str, "分")]
+	}
+
+	score64, _ := strconv.ParseInt(str, 10, 64)
+	score = int(score64)
+	return
+}
+
 // Answer 答题 1-每日 2-每周 3-专项
 func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 	defer func() {
@@ -40,15 +159,20 @@ func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 		}
 	}()
 
+	score := c.Score(user)
+	if score == nil || score.TotalScore == 0 {
+		var err error
+		score, tokenFailed, err = GetUserScore(TokenToCookies(user.Token))
+		if err != nil || score == nil {
+			logger.Errorln("积分获取失败，停止答题", err)
+			return
+		}
+	}
+
 	if !c.browser.IsConnected() {
 		return
 	}
-	score, tokenFailed, err := GetUserScore(TokenToCookies(user.Token))
 
-	if err != nil || score == nil {
-		logger.Errorln("积分获取失败，停止答题", err)
-		return
-	}
 	bc, err := c.browser.NewContext()
 	if err != nil || bc == nil {
 		logger.Errorln("创建浏览实例出错!", err)
@@ -418,9 +542,12 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 			}
 		}
 
-		score, tokenFailed, _ = GetUserScore(TokenToCookies(user.Token))
-		if tokenFailed {
-			return
+		score = c.Score(user)
+		if score == nil || score.TotalScore == 0 {
+			score, tokenFailed, _ = GetUserScore(TokenToCookies(user.Token))
+			if tokenFailed {
+				return
+			}
 		}
 	}
 	return

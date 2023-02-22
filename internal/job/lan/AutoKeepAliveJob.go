@@ -43,10 +43,15 @@ func keepAlive() {
 
 func doKeepAlive(user *model.User) {
 	time.Sleep(time.Duration(rand.Int63n(500)) * time.Second)
-	_, failed, err := study.GetUserScore(study.TokenToCookies(user.Token))
-	if err != nil {
-		logger.Errorln(err)
-		return
+	score := study.Core.Score(user)
+	failed := score.TotalScore > 0
+	var err error
+	if score != nil {
+		_, failed, err = study.GetUserScore(study.TokenToCookies(user.Token))
+		if err != nil {
+			logger.Errorln(err)
+			return
+		}
 	}
 	if failed {
 		zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
