@@ -133,6 +133,9 @@ func (c *core) getScore(page playwright.Page, selector string) (score int) {
 		logger.Debugln("获取积分失败", err.Error())
 		return
 	}
+	if div == nil {
+		return
+	}
 	str, err := div.InnerText()
 	if err != nil {
 		logger.Debugln("获取积分失败", err.Error())
@@ -140,6 +143,9 @@ func (c *core) getScore(page playwright.Page, selector string) (score int) {
 	}
 	if strings.Contains(str, "分") {
 		str = str[:strings.Index(str, "分")]
+	}
+	if str == "" {
+		return
 	}
 
 	score64, _ := strconv.ParseInt(str, 10, 64)
