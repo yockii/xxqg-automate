@@ -44,9 +44,9 @@ func keepAlive() {
 func doKeepAlive(user *model.User) {
 	time.Sleep(time.Duration(rand.Int63n(500)) * time.Second)
 	score := study.Core.Score(user)
-	failed := score.TotalScore > 0
+	failed := score == nil || score.TotalScore == 0
 	var err error
-	if score != nil {
+	if failed {
 		_, failed, err = study.GetUserScore(study.TokenToCookies(user.Token))
 		if err != nil {
 			logger.Errorln(err)
