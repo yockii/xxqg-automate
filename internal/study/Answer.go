@@ -84,16 +84,17 @@ func (c *core) Score(user *model.User) (score *Score) {
 		logger.Errorln("跳转页面失败" + err.Error())
 		return
 	}
+	time.Sleep(5 * time.Second)
 	// 查找总积分
-	total := c.getScore(page, "#app > div > div.layout-body > div > div:nth-child(2) > div.my-points-block > span.my-points-points.my-points-red")
-	today := c.getScore(page, "#app > div > div.layout-body > div > div:nth-child(2) > div.my-points-block > span:nth-child(3)")
+	total := c.getScore(page, "span.my-points-points.my-points-red", 0)
+	today := c.getScore(page, "span.my-points-points", 1)
 	// article
-	login := c.getScore(page, "#app > div > div.layout-body > div > div.my-points-section > div.my-points-content > div:nth-child(1) > div.my-points-card-footer > div.my-points-card-progress > div.my-points-card-text")
-	article := c.getScore(page, "#app > div > div.layout-body > div > div.my-points-section > div.my-points-content > div:nth-child(2) > div.my-points-card-footer > div.my-points-card-progress > div.my-points-card-text")
-	video := c.getScore(page, "#app > div > div.layout-body > div > div.my-points-section > div.my-points-content > div:nth-child(3) > div.my-points-card-footer > div.my-points-card-progress > div.my-points-card-text")
-	videoTime := c.getScore(page, "#app > div > div.layout-body > div > div.my-points-section > div.my-points-content > div:nth-child(4) > div.my-points-card-footer > div.my-points-card-progress > div.my-points-card-text")
-	special := c.getScore(page, "#app > div > div.layout-body > div > div.my-points-section > div.my-points-content > div:nth-child(6) > div.my-points-card-footer > div.my-points-card-progress > div.my-points-card-text")
-	daily := c.getScore(page, "#app > div > div.layout-body > div > div.my-points-section > div.my-points-content > div:nth-child(5) > div.my-points-card-footer > div.my-points-card-progress > div.my-points-card-text")
+	login := c.getScore(page, "div.my-points-card-text", 0)
+	article := c.getScore(page, "div.my-points-card-text", 1)
+	video := c.getScore(page, "div.my-points-card-text", 2)
+	videoTime := c.getScore(page, "div.my-points-card-text", 3)
+	special := c.getScore(page, "div.my-points-card-text", 4)
+	daily := c.getScore(page, "div.my-points-card-text", 5)
 	score = &Score{
 		TotalScore: total,
 		TodayScore: today,
@@ -124,15 +125,28 @@ func (c *core) Score(user *model.User) (score *Score) {
 			},
 		},
 	}
+	logger.Debugf("用户%s分数信息: %+v", user.Nick, score)
 	return
 }
 
-func (c *core) getScore(page playwright.Page, selector string) (score int) {
-	div, err := page.QuerySelector(selector)
+func (c *core) getScore(page playwright.Page, selector string, order int) (score int) {
+	divs, err := page.QuerySelectorAll(selector)
 	if err != nil {
-		logger.Debugln("获取积分失败", err.Error())
+		logger.Debugln("获取元素失败", err.Error())
 		return
 	}
+	if divs == nil {
+		return
+	}
+	if len(divs) < order {
+		return
+	}
+	div := divs[order]
+	//div, err := page.QuerySelector(selector)
+	//if err != nil {
+	//	logger.Debugln("获取积分失败", err.Error())
+	//	return
+	//}
 	if div == nil {
 		return
 	}
