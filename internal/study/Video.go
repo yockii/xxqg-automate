@@ -22,7 +22,7 @@ func (c *core) startLearnVideo(user *model.User, p *playwright.Page, score *Scor
 		}
 
 		if score.Content[constant.Video] != nil && score.Content[constant.Video].CurrentScore >= score.Content[constant.Video].MaxScore && score.Content["video_time"] != nil && score.Content["video_time"].CurrentScore >= score.Content["video_time"].MaxScore {
-			logger.Debugln("检测到视频学习已经完成")
+			logger.Debugf("%s 检测到视频学习已经完成", user.Nick)
 			return
 		} else {
 			n := rand.Intn(len(links))
@@ -32,7 +32,7 @@ func (c *core) startLearnVideo(user *model.User, p *playwright.Page, score *Scor
 				WaitUntil: playwright.WaitUntilStateDomcontentloaded,
 			})
 			if err != nil {
-				logger.Errorln("页面跳转失败")
+				logger.Errorf("%s页面跳转失败", user.Nick)
 				continue
 			}
 			logger.Debugln("正在观看视频: ", links[n].Title)
@@ -45,7 +45,7 @@ func (c *core) startLearnVideo(user *model.User, p *playwright.Page, score *Scor
 					ants.Submit(func() {
 						_, err = page.Evaluate(fmt.Sprintf("let h = document.body.scrollHeight/120*%d;document.documentElement.scrollTop=h;", j))
 						if err != nil {
-							logger.Errorln("视频下滑失败")
+							logger.Errorf("%s视频下滑失败", user.Nick)
 						}
 					})
 				}
@@ -59,7 +59,7 @@ func (c *core) startLearnVideo(user *model.User, p *playwright.Page, score *Scor
 				}
 			}
 			if score.Content[constant.Video] != nil && score.Content[constant.Video].CurrentScore >= score.Content[constant.Video].MaxScore && score.Content["video_time"] != nil && score.Content["video_time"].CurrentScore >= score.Content["video_time"].MaxScore {
-				logger.Debugln("检测到本次视频学习分数已满，退出学习")
+				logger.Debugf("%s 检测到本次视频学习分数已满，退出学习", user.Nick)
 				break
 			}
 		}

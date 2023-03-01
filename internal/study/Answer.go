@@ -33,7 +33,7 @@ div.my-points-section > div.my-points-content > div:nth-child(5) > div.my-points
 func (c *core) Score(user *model.User) (score *Score) {
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Errorln("获取积分异常!", err)
+			logger.Errorf("%s获取积分异常! %s", user.Nick, err)
 		}
 	}()
 
@@ -42,7 +42,7 @@ func (c *core) Score(user *model.User) (score *Score) {
 	}
 	bc, err := c.browser.NewContext()
 	if err != nil || bc == nil {
-		logger.Errorln("创建浏览实例出错!", err)
+		logger.Errorf("%s创建浏览实例出错! %s", user.Nick, err)
 		//TODO 退出系统重启
 		os.Exit(1)
 		return
@@ -51,17 +51,17 @@ func (c *core) Score(user *model.User) (score *Score) {
 	err = bc.AddInitScript(playwright.BrowserContextAddInitScriptOptions{
 		Script: playwright.String("Object.defineProperties(navigator, {webdriver:{get:()=>undefined}});")})
 	if err != nil {
-		logger.Errorln("附加脚本出错!", err)
+		logger.Errorf("%s附加脚本出错! %s", user.Nick, err)
 		return
 	}
 	defer func() {
 		if err = bc.Close(); err != nil {
-			logger.Errorln("关闭浏览实例出错", err)
+			logger.Errorf("%s关闭浏览实例出错: %s", user.Nick, err)
 		}
 	}()
 	page, err := bc.NewPage()
 	if err != nil || page == nil {
-		logger.Errorln("创建页面失败", err)
+		logger.Errorf("%s 创建页面失败: %s", user.Nick, err)
 		//TODO 退出系统重启
 		os.Exit(1)
 		return
@@ -71,7 +71,7 @@ func (c *core) Score(user *model.User) (score *Score) {
 	}()
 	err = bc.AddCookies(ToBrowserCookies(user.Token)...)
 	if err != nil {
-		logger.Errorln("添加cookies失败", err)
+		logger.Errorf("%s添加cookies失败: %s", user.Nick, err)
 		return
 	}
 	// 跳转到积分页面
@@ -81,10 +81,10 @@ func (c *core) Score(user *model.User) (score *Score) {
 		WaitUntil: playwright.WaitUntilStateDomcontentloaded,
 	})
 	if err != nil {
-		logger.Errorln("跳转页面失败" + err.Error())
+		logger.Errorf("%s跳转页面失败: %s", user.Nick, err)
 		return
 	}
-	time.Sleep(5 * time.Second)
+	time.Sleep(3 * time.Second)
 	// 查找总积分
 	total := c.getScore(page, "span.my-points-points.my-points-red", 0)
 	today := c.getScore(page, "span.my-points-points", 1)
@@ -132,13 +132,13 @@ func (c *core) Score(user *model.User) (score *Score) {
 func (c *core) getScore(page playwright.Page, selector string, order int) (score int) {
 	divs, err := page.QuerySelectorAll(selector)
 	if err != nil {
-		logger.Debugln("获取元素失败", err.Error())
+		logger.Debugf("获取元素失败: %s", err)
 		return
 	}
 	if divs == nil {
 		return
 	}
-	if len(divs) < order {
+	if len(divs) <= order {
 		return
 	}
 	div := divs[order]
@@ -152,7 +152,7 @@ func (c *core) getScore(page playwright.Page, selector string, order int) (score
 	}
 	str, err := div.InnerText()
 	if err != nil {
-		logger.Debugln("获取积分失败", err.Error())
+		logger.Debugf("获取积分失败: %s", err)
 		return
 	}
 	if strings.Contains(str, "分") {
@@ -171,7 +171,7 @@ func (c *core) getScore(page playwright.Page, selector string, order int) (score
 func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Errorln("答题发生异常恢复!", err)
+			logger.Errorf("%s答题发生异常恢复! %s", user.Nick, err)
 			// 尝试重新启动
 			ants.Submit(func() {
 				c.Answer(user, t)
@@ -184,7 +184,7 @@ func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 		var err error
 		score, tokenFailed, err = GetUserScore(TokenToCookies(user.Token))
 		if err != nil || score == nil {
-			logger.Errorln("积分获取失败，停止答题", err)
+			logger.Errorf("%s积分获取失败，停止答题: %s", user.Nick, err)
 			return
 		}
 	}
@@ -195,7 +195,7 @@ func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 
 	bc, err := c.browser.NewContext()
 	if err != nil || bc == nil {
-		logger.Errorln("创建浏览实例出错!", err)
+		logger.Errorf("%s创建浏览实例出错! %s", user.Nick, err)
 		//TODO 退出系统重启
 		os.Exit(1)
 		return
@@ -204,18 +204,18 @@ func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 	err = bc.AddInitScript(playwright.BrowserContextAddInitScriptOptions{
 		Script: playwright.String("Object.defineProperties(navigator, {webdriver:{get:()=>undefined}});")})
 	if err != nil {
-		logger.Errorln("附加脚本出错!", err)
+		logger.Errorf("%s附加脚本出错! %s", user.Nick, err)
 		return
 	}
 	defer func() {
 		if err = bc.Close(); err != nil {
-			logger.Errorln("关闭浏览实例出错", err)
+			logger.Errorf("%s关闭浏览实例出错: %s", user.Nick, err)
 		}
 	}()
 
 	page, err := bc.NewPage()
 	if err != nil || page == nil {
-		logger.Errorln("创建页面失败", err)
+		logger.Errorf("%s创建页面失败: %s", user.Nick, err)
 		//TODO 退出系统重启
 		os.Exit(1)
 		return
@@ -225,7 +225,7 @@ func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 	}()
 	err = bc.AddCookies(ToBrowserCookies(user.Token)...)
 	if err != nil {
-		logger.Errorln("添加cookies失败", err)
+		logger.Errorf("%s添加cookies失败: %s", user.Nick, err)
 		return
 	}
 	// 跳转到积分页面
@@ -235,7 +235,7 @@ func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 		WaitUntil: playwright.WaitUntilStateDomcontentloaded,
 	})
 	if err != nil {
-		logger.Errorln("跳转页面失败" + err.Error())
+		logger.Errorf("%s跳转页面失败: %s", user.Nick, err.Error())
 		return
 	}
 
@@ -244,12 +244,12 @@ func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 		// 每日答题
 		{
 			if score.Content["daily"].CurrentScore >= score.Content["daily"].MaxScore {
-				logger.Debugln("检测到每日答题已完成，退出每日答题")
+				logger.Debugf("%s检测到每日答题已完成，退出每日答题", user.Nick)
 				return
 			}
 			err = page.Click(ButtonDaily)
 			if err != nil {
-				logger.Errorln("跳转每日答题出错", err)
+				logger.Errorf("%s跳转每日答题出错: %s", user.Nick, err)
 				return
 			}
 		}
@@ -284,17 +284,17 @@ func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 		// 专项
 		{
 			if score.Content["special"].CurrentScore >= score.Content["special"].MaxScore {
-				logger.Debugln("检测到专项答题已经完成，退出答题")
+				logger.Debugf("%s检测到专项答题已经完成，退出答题", user.Nick)
 				return
 			}
 			var id int
 			id, err = getSpecialId(TokenToCookies(user.Token))
 			if err != nil {
-				logger.Errorln("获取要答的专项答题出错", err)
+				logger.Errorf("%s获取要答的专项答题出错: %s", user.Nick, err)
 				return
 			}
 			if id == 0 {
-				logger.Warnln("未获取到专项答题id，退出答题")
+				logger.Warnf("%s未获取到专项答题id，退出答题", user.Nick)
 				return
 			}
 			_, err = page.Goto(fmt.Sprintf(constant.XxqgUrlSpecialAnswerPage, id), playwright.PageGotoOptions{
@@ -303,7 +303,7 @@ func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 				WaitUntil: playwright.WaitUntilStateDomcontentloaded,
 			})
 			if err != nil {
-				logger.Errorln("跳转专项答题出错", err)
+				logger.Errorf("%s跳转专项答题出错: %s", user.Nick, err)
 				return
 			}
 		}
@@ -323,7 +323,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 		// 查看是否存在答题按钮，若按钮可用则重新提交答题
 		btn, err := page.QuerySelector(`#app > div > div.layout-body > div > div.detail-body > div.action-row > button`)
 		if err != nil {
-			logger.Debugln("获取提交按钮失败，本次答题结束" + err.Error())
+			logger.Debugf("%s获取提交按钮失败，本次答题结束: %s", user.Nick, err.Error())
 			return
 		}
 		if btn != nil {
@@ -335,7 +335,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 			if enabled {
 				err := btn.Click()
 				if err != nil {
-					logger.Errorln("提交答案失败")
+					logger.Errorf("%s提交答案失败", user.Nick)
 				}
 			}
 		}
@@ -356,7 +356,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 				page.Mouse().Move(772, 416, playwright.MouseMoveOptions{})
 				page.Mouse().Up()
 				time.Sleep(10 * time.Second)
-				logger.Debugln("可能存在滑块")
+				logger.Debugf("%s可能存在滑块", user.Nick)
 				en, err = handle.IsVisible()
 				if err != nil {
 					return
@@ -373,7 +373,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 			{
 				// 检测是否已经完成
 				if score.Content["daily"] != nil && score.Content["daily"].CurrentScore >= score.Content["daily"].MaxScore {
-					logger.Debugln("检测到每日答题已经完成，退出答题")
+					logger.Debugf("%s 检测到每日答题已经完成，退出答题", user.Nick)
 					return
 				}
 			}
@@ -381,7 +381,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 			{
 				// 检测是否已经完成
 				if score.Content["weekly"] != nil && score.Content["weekly"].CurrentScore >= score.Content["weekly"].MaxScore {
-					logger.Debugln("检测到每周答题已经完成，退出答题")
+					logger.Debugf("%s 检测到每周答题已经完成，退出答题", user.Nick)
 					return
 				}
 			}
@@ -389,7 +389,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 			{
 				// 检测是否已经完成
 				if score.Content["special"] != nil && score.Content["special"].CurrentScore >= score.Content["special"].MaxScore {
-					logger.Debugln("检测到专项答题已经完成，退出答题")
+					logger.Debugf("%s 检测到专项答题已经完成，退出答题", user.Nick)
 					return
 				}
 			}
@@ -399,7 +399,7 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 		category, err := page.QuerySelector(
 			`#app > div > div.layout-body > div > div.detail-body > div.question > div.q-header`)
 		if err != nil {
-			logger.Errorln("没有找到题目元素", err)
+			logger.Errorf("%s没有找到题目元素: %s", user.Nick, err)
 			return
 		}
 		if category != nil {
@@ -411,30 +411,29 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 			question, err = page.QuerySelector(
 				`#app > div > div.layout-body > div > div.detail-body > div.question > div.q-body > div`)
 			if err != nil {
-				logger.Errorln("未找到题目问题元素")
+				logger.Errorf("%s未找到题目问题元素", user.Nick)
 				return
 			}
 			// 获取题目类型
 			categoryText := ""
 			categoryText, err = category.TextContent()
 			if err != nil {
-				logger.Errorln("获取题目元素失败", err)
-
+				logger.Errorf("%s获取题目元素失败: %s", user.Nick, err)
 				return
 			}
-			logger.Debugln("## 题目类型：" + categoryText)
+			logger.Debugf("%s ## 题目类型：%s", user.Nick, categoryText)
 
 			// 获取题目的问题
 			questionText := ""
 			questionText, err = question.TextContent()
 			if err != nil {
-				logger.Errorln("获取题目问题失败", err)
+				logger.Errorf("%s获取题目问题失败: %s", user.Nick, err)
 				return
 			}
 
-			logger.Debugln("## 题目：" + questionText)
+			logger.Debugf("%s## 题目：%s", user.Nick, questionText)
 			if title == questionText {
-				logger.Warningln("可能已经卡住，正在重试，重试次数+1")
+				logger.Warningf("%s 可能已经卡住，正在重试，重试次数+1", user.Nick)
 				continue
 			} else {
 				i = 0
@@ -446,39 +445,37 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 			openTips, err = page.QuerySelector(
 				`#app > div > div.layout-body > div > div.detail-body > div.question > div.q-footer > span`)
 			if err != nil || openTips == nil {
-				logger.Errorln("未获取到题目提示信息")
+				logger.Errorf("%s未获取到题目提示信息", user.Nick)
 				continue
 			}
-			logger.Debugln("开始尝试获取打开提示信息按钮")
+			logger.Debugf("%s开始尝试获取打开提示信息按钮", user.Nick)
 			// 点击提示的按钮
 			err = openTips.Click()
 			if err != nil {
-				logger.Errorln("点击打开提示信息按钮失败", err)
+				logger.Errorf("%s点击打开提示信息按钮失败: %s", user.Nick, err)
 				continue
 			}
-			logger.Debugln("已打开提示信息")
+			logger.Debugf("%s 已打开提示信息", user.Nick)
 			// 获取页面内容
 			content := ""
 			content, err = page.Content()
 			if err != nil {
-				logger.Errorln("获取网页全体内容失败", err)
+				logger.Errorf("%s 获取网页全体内容失败", user.Nick, err)
 				continue
 			}
 			time.Sleep(time.Second * time.Duration(rand.Intn(3)))
-			logger.Debugln("以获取网页内容")
 			// 关闭提示信息
 			err = openTips.Click()
 			if err != nil {
-				logger.Errorln("点击打开提示信息按钮失败", err)
+				logger.Errorf("%s 点击打开提示信息按钮失败: %s", user.Nick, err)
 				continue
 			}
-			logger.Debugln("已关闭提示信息")
 			// 从整个页面内容获取提示信息
 			tips := getTips(content)
-			logger.Debugln("[提示信息]：", tips)
+			//logger.Debugln("[提示信息]：", tips)
 
 			if i > 4 {
-				logger.Warningln("重试次数太多，即将退出答题")
+				logger.Warningf("%s 重试次数太多，即将退出答题", user.Nick)
 				//options, _ := getOptions(page)
 				return
 			}
@@ -489,19 +486,19 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 				// 填充填空题
 				err = FillBlank(page, tips)
 				if err != nil {
-					logger.Errorln("填空题答题失败", err)
+					logger.Errorf("%s填空题答题失败: %s", user.Nick, err)
 					return
 				}
 			case strings.Contains(categoryText, "多选题"):
-				logger.Debugln("读取到多选题")
+				//logger.Debugln("读取到多选题")
 				var options []string
 				options, err = getOptions(page)
 				if err != nil {
-					logger.Errorln("获取选项失败", err)
+					logger.Errorf("%s获取选项失败: %s", user.Nick, err)
 					return
 				}
-				logger.Debugln("获取到选项答案：", options)
-				logger.Debugln("[多选题选项]：", options)
+				//logger.Debugln("获取到选项答案：", options)
+				//logger.Debugln("[多选题选项]：", options)
 				var answer []string
 
 				for _, option := range options {
@@ -516,28 +513,28 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 
 				if len(answer) < 1 {
 					answer = append(answer, options...)
-					logger.Debugln("无法判断答案，自动选择ABCD")
+					//logger.Debugln("无法判断答案，自动选择ABCD")
 				}
-				logger.Debugln("根据提示分别选择了", answer)
+				//logger.Debugln("根据提示分别选择了", answer)
 				// 多选题选择
 				err = radioCheck(page, answer)
 				if err != nil {
 					return
 				}
 			case strings.Contains(categoryText, "单选题"):
-				logger.Debugln("读取到单选题")
+				//logger.Debugln("读取到单选题")
 				var options []string
 				options, err = getOptions(page)
 				if err != nil {
 					logger.Errorln("获取选项失败", err)
 					return
 				}
-				logger.Debugln("获取到选项答案：", options)
+				//logger.Debugln("获取到选项答案：", options)
 
 				var answer []string
 
 				if len(tips) > 1 {
-					logger.Warningln("检测到单选题出现多个提示信息，即将对提示信息进行合并")
+					logger.Warningf("%s 检测到单选题出现多个提示信息，即将对提示信息进行合并", user.Nick)
 					tip := strings.Join(tips, "")
 					tips = []string{tip}
 				}
@@ -551,10 +548,10 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 				}
 				if len(answer) < 1 {
 					answer = append(answer, options[0])
-					logger.Debugln("无法判断答案，自动选择A")
+					//logger.Debugln("无法判断答案，自动选择A")
 				}
 
-				logger.Debugln("根据提示分别选择了", answer)
+				//logger.Debugln("根据提示分别选择了", answer)
 				err = radioCheck(page, answer)
 				if err != nil {
 					return
@@ -594,15 +591,15 @@ func RemoveRepByLoop(slc []string) []string {
 func radioCheck(page playwright.Page, answer []string) error {
 	radios, err := page.QuerySelectorAll(`.q-answer.choosable`)
 	if err != nil {
-		logger.Errorln("获取选项失败")
+		//logger.Errorln("获取选项失败")
 		return err
 	}
-	logger.Debugln("获取到", len(radios), "个按钮")
+	//logger.Debugln("获取到", len(radios), "个按钮")
 	for _, radio := range radios {
 		textContent := ""
 		textContent, err = radio.TextContent()
 		if err != nil {
-			logger.Errorln("获取选项答案文本出现错误", err)
+			//logger.Errorln("获取选项答案文本出现错误", err)
 			return err
 		}
 		for _, s := range answer {
