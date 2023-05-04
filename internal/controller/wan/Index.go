@@ -323,7 +323,7 @@ func sendCommonText(atUserId string, content string) {
 	apiUrl := constant.DingtalkOApiBaseUrl + "/robot/send"
 	//t := fmt.Sprintf("%d", time.Now().UnixMilli())
 
-	util.GetClient().R().
+	_, _ = util.GetClient().R().
 		SetHeader("Content-Type", "application/json").
 		SetQueryParams(map[string]string{
 			//"timestamp":    t,
