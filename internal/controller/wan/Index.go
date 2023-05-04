@@ -100,6 +100,36 @@ func handleDingtalkCall() {
 			logger.Errorln(err)
 			return ctx.SendStatus(fiber.StatusBadRequest)
 		}
+
+		if strings.Contains(data.Text.Content, "帮助") {
+			sendToDingtalk("", `机器人指令："帮助": 显示可用指令集;  
+"暂停": 暂停接收指令（与启动不能同时接收）; 
+"启动": 恢复接收指令（与暂停不能同时接收）;   
+"登录": 获取登录链接（需安装app进行跳转）;  
+"统计": 统计机器人学习情况; 
+"绑定": 绑定名称（如有些人app中的名称与钉钉不一致）; 
+"学习": 立即开始学习; `, 1)
+		}
+
+		if strings.Contains(data.Text.Content, "暂停") {
+			// 暂停接收
+			config.DefaultInstance.Set(constant.ConfigServerPause, true)
+			_ = config.DefaultInstance.SafeWriteConfig()
+			// 发送钉钉消息
+			sendToDingtalk("", "已暂停接受指令, 执行中的任务不受影响，要恢复请@我并发送“启动”", 1)
+		} else if strings.Contains(data.Text.Content, "启动") {
+			config.DefaultInstance.Set(constant.ConfigServerPause, false)
+			_ = config.DefaultInstance.SafeWriteConfig()
+			// 发送钉钉消息
+			sendToDingtalk("", "已恢复机器人指令接收", 1)
+		}
+
+		if config.GetBool(constant.ConfigServerPause) {
+			// 发送钉钉消息
+			sendToDingtalk("", "机器人指令暂停接收中, 要回复请@我并发送'启动'", 1)
+			return ctx.SendStatus(fiber.StatusOK)
+		}
+
 		if strings.Contains(data.Text.Content, "登录") {
 			locker.Lock()
 			defer locker.Unlock()
@@ -118,6 +148,8 @@ func handleDingtalkCall() {
 		if strings.Contains(data.Text.Content, "学习") {
 			// 进行主动学习
 			manualStudy = append(manualStudy, data.SenderStaffId)
+			// 发送钉钉消息
+			sendToDingtalk("", "已收到学习请求，请等待处理", 1)
 		}
 		return ctx.SendStatus(fiber.StatusOK)
 	})
