@@ -148,6 +148,7 @@ func createTables() {
     last_finish_time datetime,
     last_score       INTEGER,
     score            INTEGER,
+    only_login_tag 	 INTEGER,
     dingtalk_id      varchar(50)
 );`
 		zorm.UpdateFinder(ctx, zorm.NewFinder().Append(userTable))
@@ -163,8 +164,11 @@ func createTables() {
     create_time datetime
 );`
 		zorm.UpdateFinder(ctx, zorm.NewFinder().Append(jobTable))
-		return nil, nil
 
+		alterUserTable := `alter table t_user add column only_login_tag INTEGER;`
+		zorm.UpdateFinder(ctx, zorm.NewFinder().Append(alterUserTable))
+
+		return nil, nil
 	})
 }
 
