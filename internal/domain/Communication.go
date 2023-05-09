@@ -6,6 +6,7 @@ type StatusAsk struct {
 	BindUsers      map[string]string `json:"bindUsers"`
 	LinkDingId     string            `json:"linkDingId,omitempty"`
 	StartStudy     []string          `json:"startStudy,omitempty"`
+	TagUsers       []string          `json:"tagUsers,omitempty"`
 }
 
 type StatisticsInfo struct {

@@ -31,6 +31,7 @@ var needStatistics atomic.Bool
 var bindUser = make(map[string]string) // key=钉钉id value=名字
 var manualStudy []string               // 主动学习名单
 var locker sync.Mutex
+var tagUser []string // 标记用户名单，此类用户只登录，不学习
 
 func InitRouter() {
 
@@ -108,7 +109,8 @@ func handleDingtalkCall() {
 "登录": 获取登录链接（需安装app进行跳转）;  
 "统计": 统计机器人学习情况; 
 "绑定": 绑定名称（如有些人app中的名称与钉钉不一致）; 
-"学习": 立即开始学习; `, 1)
+"学习": 立即开始学习; 
+"只登标记": 标记当前账号只登录不学习; `, 1)
 		}
 
 		if strings.Contains(data.Text.Content, "暂停") {
@@ -151,6 +153,11 @@ func handleDingtalkCall() {
 			// 发送钉钉消息
 			sendToDingtalk("", "已收到学习请求，请等待处理", 1)
 		}
+		if strings.Contains(data.Text.Content, "只登标记") {
+			tagUser = append(tagUser, data.SenderStaffId)
+			// 发送钉钉消息
+			sendToDingtalk("", "已收到只登录不学习请求，请等待处理", 1)
+		}
 		return ctx.SendStatus(fiber.StatusOK)
 	})
 }
@@ -159,8 +166,13 @@ func handleStatusAsk() {
 	server.Get("/api/v1/status", checkToken, func(ctx *fiber.Ctx) error {
 		locker.Lock()
 		defer locker.Unlock()
+		// 立即学习名单
 		needStudy := manualStudy
 		manualStudy = []string{}
+		// 标记只登录用户
+		needTag := tagUser
+		tagUser = []string{}
+		// 需要登录链接的单个用户
 		loginDingId := ""
 		needLink := len(loginReq) > 0
 		if needLink {
@@ -172,6 +184,7 @@ func handleStatusAsk() {
 			NeedStatistics: needStatistics.Load(),
 			BindUsers:      bindUser,
 			StartStudy:     needStudy,
+			TagUsers:       needTag,
 		})
 	})
 }

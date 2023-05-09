@@ -1,7 +1,9 @@
 package lan
 
 import (
+	"context"
 	"time"
+	"xxqg-automate/internal/model"
 
 	"github.com/panjf2000/ants/v2"
 	logger "github.com/sirupsen/logrus"
@@ -74,8 +76,25 @@ func fetchServerInfo() {
 				continue
 			}
 			if user != nil {
-				ants.Submit(func() {
+				_ = ants.Submit(func() {
 					study.StartStudyRightNow(user)
+				})
+			}
+		}
+	}
+
+	if len(result.TagUsers) > 0 {
+		// 进行用户标记
+		for _, dingId := range result.StartStudy {
+			dingtalkId := dingId
+			user, err := service.UserService.FindByDingtalkId(dingtalkId)
+			if err != nil {
+				logger.Errorln(err)
+				continue
+			}
+			if user != nil {
+				_ = ants.Submit(func() {
+					_ = service.UserService.UpdateNotZero(context.Background(), &model.User{Id: user.Id, OnlyLoginTag: 1})
 				})
 			}
 		}

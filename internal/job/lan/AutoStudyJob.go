@@ -22,12 +22,12 @@ import (
 func InitAutoStudy() {
 	// 加载已有的job
 	loadJobs()
-	task.AddFunc("0 0/3 6-23 * * *", func() {
+	_, _ = task.AddFunc("0 0/3 6-23 * * *", func() {
 		// 1、查出需要执行学习的用户
 		lastTime := time.Now().Add(-20 * time.Hour)
 		var users []*model.User
 		if err := zorm.Query(context.Background(),
-			zorm.NewSelectFinder(model.UserTableName).Append("WHERE (last_study_time is null or last_study_time<?) and status>0", lastTime),
+			zorm.NewSelectFinder(model.UserTableName).Append("WHERE (last_study_time is null or last_study_time<?) and status>0 and only_login_tag <> 1", lastTime),
 			&users,
 			nil,
 		); err != nil {
@@ -40,7 +40,7 @@ func InitAutoStudy() {
 		var notFinished []*model.User
 		if err := zorm.Query(context.Background(),
 			zorm.NewSelectFinder(model.UserTableName).Append(
-				"WHERE last_study_time>? and last_study_time<? and (last_finish_time is null or last_finish_time<last_study_time or last_score<10) and status>0",
+				"WHERE last_study_time>? and last_study_time<? and (last_finish_time is null or last_finish_time<last_study_time or last_score<10) and status>0 and only_login_tag <> 1",
 				time.Now().Format("2006-01-02"),
 				lastTime),
 			&notFinished,
@@ -54,12 +54,12 @@ func InitAutoStudy() {
 		for _, user := range users {
 			if user.Token != "" {
 				if ok, _ := study.CheckUserCookie(study.TokenToCookies(user.Token)); ok {
-					ants.Submit(func() {
+					_ = ants.Submit(func() {
 						study.StartStudy(user)
 					})
 				} else {
 					logger.Warnln("用户登录信息已失效", user.Nick)
-					zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
+					_, _ = zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
 						_, err := zorm.UpdateNotZeroValue(ctx, &model.User{
 							Id:            user.Id,
 							LastCheckTime: domain.DateTime(time.Now()),
@@ -72,7 +72,7 @@ func InitAutoStudy() {
 					})
 					if config.GetString("communicate.baseUrl") != "" {
 						if config.GetBool("xxqg.expireNotify") {
-							util.GetClient().R().
+							_, _ = util.GetClient().R().
 								SetHeader("token", constant.CommunicateHeaderKey).
 								SetBody(&internalDomain.NotifyInfo{
 									Nick: user.Nick,
@@ -102,7 +102,7 @@ func loadJobs() {
 			logger.Errorln(err)
 			continue
 		}
-		ants.Submit(func() {
+		_ = ants.Submit(func() {
 			study.StartStudy(user, job)
 		})
 		time.Sleep(time.Second)

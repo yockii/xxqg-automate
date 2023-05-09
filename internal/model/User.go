@@ -21,6 +21,7 @@ type User struct {
 	Score          int             `json:"score" column:"score"`
 	Status         int             `json:"status,omitempty" column:"status"`
 	DingtalkId     string          `json:"dingtalkId,omitempty" column:"dingtalk_id"`
+	OnlyLoginTag   int             `json:"onlyLoginTag,omitempty" column:"only_login_tag"`
 	CreateTime     domain.DateTime `json:"createTime" column:"create_time"`
 }
 

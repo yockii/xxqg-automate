@@ -11,6 +11,7 @@
 
 [server]
   port = 8080
+  pause=false
 
 [xxqg]
   expirenotify = false
