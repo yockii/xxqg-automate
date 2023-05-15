@@ -47,11 +47,7 @@ func doKeepAlive(user *model.User) {
 	failed := score == nil || score.TotalScore == 0
 	var err error
 	if failed {
-		_, failed, err = study.GetUserScore(study.TokenToCookies(user.Token))
-		if err != nil {
-			logger.Errorln(err)
-			return
-		}
+		logger.Warnf("未能成功获取到用户%s的积分，用户将置为失效状态", user.Nick)
 	}
 	if failed {
 		zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {

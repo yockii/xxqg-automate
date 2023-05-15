@@ -181,12 +181,8 @@ func (c *core) Answer(user *model.User, t int) (tokenFailed bool) {
 
 	score := c.Score(user)
 	if score == nil || score.TotalScore == 0 {
-		var err error
-		score, tokenFailed, err = GetUserScore(TokenToCookies(user.Token))
-		if err != nil || score == nil {
-			logger.Errorf("%s积分获取失败，停止答题: %s", user.Nick, err)
-			return
-		}
+		logger.Warnf("%s积分获取失败，停止答题", user.Nick)
+		return
 	}
 
 	if !c.browser.IsConnected() {
@@ -561,10 +557,8 @@ func (c *core) startAnswer(user *model.User, p *playwright.Page, score *Score, t
 
 		score = c.Score(user)
 		if score == nil || score.TotalScore == 0 {
-			score, tokenFailed, _ = GetUserScore(TokenToCookies(user.Token))
-			if tokenFailed {
-				return
-			}
+			logger.Errorf("%s 获取分数失败, 停止答题", user.Nick)
+			return
 		}
 	}
 	return

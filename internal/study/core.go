@@ -300,15 +300,7 @@ func (j *StudyingJob) startStudy(immediately ...bool) {
 	if score == nil || score.TotalScore == 0 {
 		for i := 0; i < 5; i++ {
 			time.Sleep(15 * time.Second)
-			score, tokenFailed, err = GetUserScore(TokenToCookies(j.user.Token))
-			if err != nil {
-				logger.Errorln(err)
-				continue
-			}
-			if tokenFailed {
-				dealFailedToken(j.user)
-				return
-			}
+			score = Core.Score(j.user)
 			if score != nil && score.TodayScore > 0 {
 				break
 			}
@@ -317,6 +309,11 @@ func (j *StudyingJob) startStudy(immediately ...bool) {
 			logger.Errorln(err)
 			return
 		}
+	}
+	tokenFailed = score == nil || score.TotalScore == 0
+	if tokenFailed {
+		dealFailedToken(j.user)
+		return
 	}
 	now := domain.DateTime(time.Now())
 	lastCheckTime := now

@@ -27,7 +27,7 @@ type Data struct {
 	MaxScore     int `json:"max_score"`
 }
 
-func GetUserScore(cookies []*http.Cookie) (score *Score, tokenFailed bool, err error) {
+func GetUserScore_declared(cookies []*http.Cookie) (score *Score, tokenFailed bool, err error) {
 	score = new(Score)
 	var resp []byte
 

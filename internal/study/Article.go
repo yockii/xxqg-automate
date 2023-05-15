@@ -18,12 +18,8 @@ func (c *core) Learn(user *model.User, learnModule string) (tokenFailed bool) {
 	}
 	score := c.Score(user)
 	if score == nil || score.TotalScore == 0 {
-		var err error
-		score, tokenFailed, err = GetUserScore(TokenToCookies(user.Token))
-		if err != nil {
-			logger.Errorln(err)
-			return
-		}
+		logger.Warnf("未能成功获取到用户%s的积分，停止学习", user.Nick)
+		return
 	}
 	if score == nil {
 		logger.Debugf("未获取到分数，结束%s学习\n", learnModule)
@@ -120,10 +116,8 @@ func (c *core) startLearnArticle(user *model.User, p *playwright.Page, score *Sc
 		}
 		score = c.Score(user)
 		if score == nil || score.TotalScore == 0 {
-			score, tokenFailed, _ = GetUserScore(TokenToCookies(user.Token))
-			if tokenFailed {
-				return
-			}
+			logger.Warnf("未能成功获取到用户%s的积分，停止学习", user.Nick)
+			return
 		}
 		if articleScore, ok := score.Content[constant.Article]; !ok || articleScore.CurrentScore >= articleScore.MaxScore {
 			logger.Debugf("%s 检测到文章学习已完成，结束文章学习", user.Nick)
